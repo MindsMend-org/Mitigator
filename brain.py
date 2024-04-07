@@ -32,16 +32,23 @@ import os
 import glob
 
 
+
 class Brain(nn.Module):
     def __init__(self, num_sensors, num_actions, Load_Model=False, Model_Directory='', Model_file_ext='.pth',
                  Find=False, default_model='model.pth'):
+
         super(Brain, self).__init__()
         self.layer1 = nn.Linear(num_sensors, 128)
         self.layer2 = nn.Linear(128, 64)
         self.output_layer = nn.Linear(64, num_actions)
         self.optimizer = optim.Adam(self.parameters(), lr=0.0113211)
+
+        # One-hot encoding of actions
+        # self.action_mappings = np.identity(num_actions, dtype=np.uint8) # be more conventional
+        self.action_mappings = torch.eye(num_actions)
+
         self.load_a_model = Load_Model
-        self.model_file = default_model
+        self.model_file = default_model if Load_Model else 'model.pth'
 
         if Load_Model:
             model_path = self.find_latest_model(Model_Directory, Model_file_ext) if Find else os.path.join(
@@ -75,8 +82,15 @@ class Brain(nn.Module):
         state_tensor = torch.tensor(state, dtype=torch.float)
         with torch.no_grad():  # No need to track gradients here
             action_outputs = self.forward(state_tensor)
-        action = torch.argmax(action_outputs).item()
-        return action
+
+        # simple action to .eye matrix type
+        # action = self.action_mappings[torch.argmax(action_outputs).item()]  # readability
+        action_index = torch.argmax(action_outputs).item()
+        action = self.action_mappings[action_index]
+
+        # For a full action decision matrix, you could use softmax to get probabilities
+        action_probabilities = torch.nn.functional.softmax(action_outputs, dim=0).numpy()
+        return action_index, action, action_probabilities
 
     def learn(self, state, action, reward, done, current_score, score_target=0.9):
         self.train()
@@ -142,6 +156,16 @@ class Brain(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def get_weights(self, layer_name='layer1'):
+        # Return the weight matrix of the specified layer
+        # Here, accessing the weights of layer1 as an example
+        layer = getattr(self, layer_name, None)
+        if layer is not None:
+            return layer.weight.data.cpu().numpy()  # Assuming you want to work with NumPy arrays
+        else:
+            print(f"Layer {layer_name} not found in the model.")
+            return None
 
     def save_model(self, filepath='model.pth'):
         if self.load_a_model:

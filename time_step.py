@@ -28,11 +28,12 @@ def TIME_STEP():
     global GLOBAL_TIME_STEP
     return GLOBAL_TIME_STEP
 
-def time_step(simulate=True, wait_time=3):
+def time_step(simulate=True, wait_time=3, newline=True):
     global GLOBAL_TIME_STEP
     GLOBAL_TIME_STEP += 1
 
     if simulate: time.sleep(wait_time)  # Simulate time delay for each step
 
     print(f'\rTime Step:{GLOBAL_TIME_STEP}', end=' ')
+    if newline: print()
 

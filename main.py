@@ -19,7 +19,11 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 
 # gen requirements file pip freeze > requirements.txt
 
-__version__ = "0.0.0001"
+__version__ = "0.0.0002"
+
+import fc_color
+from dataframe_validator import validate_and_correct_data
+
 print(f'main.py {__version__}')
 
 print(f'FoldingCircles 2024  A Play with [ Deep Learning Part 2 ]  -M-')
@@ -58,22 +62,41 @@ print(f'')
 from game import Game, get_score, get_target_score
 from brain import Brain
 from time_step import time_step
+from render_weights import WeightRenderer
 
+
+# This may be an un-necessary step but for me needed.
+Validate_currency_pairs = {
+    'EURUSD': 'EURUSD_data.csv', 'USDJPY': 'USDJPY_data.csv', 'GBPUSD': 'GBPUSD_data.csv',
+    'AUDUSD': 'AUDUSD_data.csv', 'USDCAD': 'USDCAD_data.csv', 'USDCHF': 'USDCHF_data.csv',
+    'AUDJPY': 'AUDJPY_data.csv', 'NZDUSD': 'NZDUSD_data.csv'
+}
+# Let's validate and fix the data as needed
+for pair, file_path in Validate_currency_pairs.items():
+    print(f'Validating {pair} File: {file_path}')
+    v_df, corrected_file_name = validate_and_correct_data(file_path)
 
 def main():
+    # initialize neuron renderer
+    neuron_renderer = WeightRenderer(width=800, height=600)
+
     currency_pairs = {
-        'EURUSD':'EURUSD_data.csv', 'USDJPY': 'USDJPY_data.csv', 'GBPUSD':'GBPUSD_data.csv',
-        'AUDUSD':'AUDUSD_data.csv', 'USDCAD':'USDCAD_data.csv' , 'USDCHF':'USDCHF_data.csv',
-        'AUDJPY': 'AUDJPY_data.csv', 'NZDUSD':'NZDUSD_data.csv'
+        'EURUSD':'EURUSD_data_corrected.csv', 'USDJPY': 'USDJPY_data_corrected.csv', 'GBPUSD':'GBPUSD_data_corrected.csv',
+        'AUDUSD':'AUDUSD_data_corrected.csv', 'USDCAD':'USDCAD_data_corrected.csv' , 'USDCHF':'USDCHF_data_corrected.csv',
+        'AUDJPY': 'AUDJPY_data_corrected.csv', 'NZDUSD':'NZDUSD_data_corrected.csv'
     }
     game = Game(currency_pairs)
     game.forex_step()
     brain = Brain(num_sensors=game.state_size, num_actions=game.action_size, Load_Model=True, Find=True)
+    sim_time = True  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
 
     while not game.is_over():
 
         state = game.get_state()
-        action = brain.decide_action(state)
+
+        action_index, action_matrix, action_probabilities = brain.decide_action(state)  # for clarity
+
+        action = action_index
         reward, done = game.update(action)
 
         current_score = get_score()  # Get the current score
@@ -81,14 +104,17 @@ def main():
         # brain.action_learn(state, action, reward, done, current_score, score_target=score_target)
         brain.learn(state, action, reward, done, current_score)
 
-        time_step(simulate=True)  # Simulate time passing
-        game.forex_step(sim_wait=True)  # Get data for new step sim 1 min intervals
+        time_step(simulate=sim_time)  # Simulate time passing
+        game.forex_step(sim_wait=sim_time)  # Get data for new step sim 1 min intervals
 
         if game.should_save_model():
             brain.save_model('model.pth')
 
         if done:
             break  # End the loop if the game is over
+
+        # vis the Brain
+        neuron_renderer.update(weight_matrix=brain.get_weights())
 
 
 if __name__ == "__main__":

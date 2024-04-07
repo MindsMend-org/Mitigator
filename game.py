@@ -18,8 +18,6 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 __version__ = "0.0.0001"
 print(f'game.py {__version__}')
 
-
-
 # game.py
 from time_step import TIME_STEP  # Import here to avoid circular dependencies
 import time
@@ -27,7 +25,7 @@ from forex_data_loader import DataLoader
 from forex_playback_sim import PlaybackSimulator
 from forex_data_loader import pull_forex_data
 from trade__transactions import TradeTransaction
-
+from fc_color import reset_color, rgb_color
 
 UPDATE_FOREX = False
 
@@ -66,7 +64,7 @@ def distance_to_target(score):
 
 class Game:
     def __init__(self, currency_pairs):
-        self.currency_pairs = currency_pairs  # Example: [('USDJPY', 'USDJPY_data.csv'), ('AUDJPY', 'AUDJPY_data.csv')]
+        self.currency_pairs = currency_pairs  # Example: currency_pairs = {'EURUSD':'EURUSD_data.csv', 'USDJPY': 'USDJPY_data.csv'}
         self.simulators = {}
         self.transactions = {}  # Transactions for each currency pair
 
@@ -76,8 +74,10 @@ class Game:
             self.simulators[pair] = PlaybackSimulator(historical_data)
             self.transactions[pair] = []  # List to store active and closed transactions
 
+        self.last_close_prices = {pair: None for pair in self.currency_pairs}
+
         self.state_size = 60  # Example state size
-        self.action_size = 11  # Number of actions
+        self.action_size = 11  # Number of Game actions 9 dir 2 buttons [any game]
         self.state = [0] * self.state_size
         self.score = 0
         self.target_score = GAME_TARGET_SCORE  # Define the target score
@@ -89,6 +89,11 @@ class Game:
         self.step = 0
         self.bank = 120000
         self.wager = 100
+        self.reset = reset_color()
+        self.red = rgb_color(220, 40, 60)
+        self.green = rgb_color(0, 255, 0)
+        self.sim_wait = True
+        self.sim_wait_time = 3
 
     def start_forex_simulations(self):
         if self.simulators:
@@ -101,19 +106,44 @@ class Game:
         else:
             print("Data not loaded. Call load_data() first.")
 
-    def forex_step(self, sim_wait=False, wait_time=3):
-        STEPPED=False
+    def forex_step(self, sim_wait=None, wait_time=None):
+        if wait_time == None:
+            wait_time = self.sim_wait_time
+        if sim_wait == None:
+            sim_wait = self.sim_wait
+
+        STEPPED = False
         pairs_count = len(self.simulators)
         counter = 0
         for pair, simulator in self.simulators.items():
             if self.simulators:
                 if not STEPPED:
                     self.step += 1
-                    STEPPED=True
+                    STEPPED = True
                 print(f"Step {self.step} for {pair}  ", end=' ')
                 # Ensure sim_wait is True only for the last item in the loop
                 current_wait = sim_wait if counter == pairs_count else False
                 current_forex_data = simulator.get_sim_index(simulator.index, wait=current_wait, wait_time=wait_time)
+
+                last_close = self.last_close_prices[pair]
+                current_close = current_forex_data['close']
+
+                change = 0.0
+
+                # Determine the color based on price movement
+                if last_close is not None:
+                    color = self.green if current_close > last_close else self.red
+                    change = current_close - last_close
+                else:
+                    color = self.reset
+
+                # ui
+                print(
+                    f"{color}Time: {current_forex_data['timestamp']}, Close: {current_close}  {change:.6f}{self.reset}")
+
+                # update last_close
+                self.last_close_prices[pair] = current_close
+
                 self.update_transactions(pair, current_forex_data)
 
     # trade Transactions
@@ -163,8 +193,6 @@ class Game:
             if Debug:
                 print(f'This: {action} Last Action Taken: {self.action_history[-1]} Repeated: {is_repeated}', end='  ')
 
-
-
         reward += self.get_action_reward(action) + bonus
         self.score += reward
         set_score(self.score)
@@ -172,8 +200,8 @@ class Game:
         # Debug output
         if Debug:
             print(
-                f'Action: {action} Repeated: {is_repeated}  Reward: {reward:.2f} Score: {self.score:.2f}  Distance:{get_target_score()-self.score}', end='  ')
-
+                f'Action: {action} Repeated: {is_repeated}  Reward: {reward:.2f} Score: {self.score:.2f}  Distance:{get_target_score() - self.score}',
+                end='  ')
 
         # Update the state and score
         self.state[action % self.state_size] = self.score
@@ -189,6 +217,7 @@ class Game:
             self.state_history.pop(0)
 
         return reward, self.is_over()
+
     def is_over(self):
         # Example condition to end the game
         return self.score > 3000
