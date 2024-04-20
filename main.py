@@ -1,16 +1,12 @@
 # Brett Palmer mince@foldingcircles.co.uk
 
 # pip install numpy
-
 # Deep Learn [try] lets create a curious brian.
-
 # gen requirements file pip freeze > requirements.txt
 
-__version__ = "0.0.0002"
-
+__version__ = "0.0.0003"
 import fc_color
 from dataframe_validator import validate_and_correct_data
-
 print(f'main.py {__version__}')
 
 print(f'FoldingCircles 2024  A Play with [ Deep Learning Part 2 ]  -M-')
@@ -37,14 +33,6 @@ print(f'Exotic Pairs:   '
 print(f'')
 print(f'')
 
-# Personal project:
-# first create a baby brain tries random things lots. Done! Here We continue with new train system
-
-# seems ai needs to see all paths to know what a path is and if the info it sees is similar to a path seen.
-# mirror data in time and dimension forwards v backwards and 360/8 directions
-
-# scores[reward/cost] / aims[goals / recover / attack / defend] / targets[ progress in steps towards a final goal]
-
 # main.py
 from game import Game, get_score, get_target_score
 from brain import Brain
@@ -65,18 +53,35 @@ for pair, file_path in Validate_currency_pairs.items():
 
 def main():
     # initialize neuron renderer
-    neuron_renderer = WeightRenderer(width=800, height=600)
+    neuron_renderer = WeightRenderer(width=400, height=400)
 
+    # Define OUR Pairs
     currency_pairs = {
         'EURUSD':'EURUSD_data_corrected.csv', 'USDJPY': 'USDJPY_data_corrected.csv', 'GBPUSD':'GBPUSD_data_corrected.csv',
         'AUDUSD':'AUDUSD_data_corrected.csv', 'USDCAD':'USDCAD_data_corrected.csv' , 'USDCHF':'USDCHF_data_corrected.csv',
         'AUDJPY': 'AUDJPY_data_corrected.csv', 'NZDUSD':'NZDUSD_data_corrected.csv'
     }
+
+    # Init Game
     game = Game(currency_pairs)
     game.forex_step()
-    brain = Brain(num_sensors=game.state_size, num_actions=game.action_size, Load_Model=True, Find=True)
+
+    # Init Brain Type
+    brain = Brain(use_cuda=False, num_sensors=game.state_size, num_actions=game.action_size, Load_Model=True, Find=True)
+
+    # Simulate Time ?
     sim_time = True  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
 
+    # TODO  
+    # Attention To Sensors
+    # AttentionConvMatrix = [P[n] X P[-n]] = 1,0,-1
+    # UI
+    # AI Controls
+    # Q > learn
+    # Live Data
+    # Save 
+
+    # The Loop
     while not game.is_over():
 
         state = game.get_state()
@@ -92,7 +97,7 @@ def main():
         brain.learn(state, action, reward, done, current_score)
 
         time_step(simulate=sim_time)  # Simulate time passing
-        game.forex_step(sim_wait=sim_time)  # Get data for new step sim 1 min intervals
+        game.forex_step(sim_wait=sim_time)  # Get data for new step sim 1 min intervals: quiet/expose internals & logic?
 
         if game.should_save_model():
             brain.save_model('model.pth')
