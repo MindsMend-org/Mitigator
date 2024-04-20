@@ -1,11 +1,12 @@
 # Brett Palmer mince@foldingcircles.co.uk
 # Deep Learn [try]
 
-# from game import get_score
-__version__ = "0.0.0002"
+__version__ = "0.0.0003"
+
 print(f'brain.py {__version__}')
 
 # brain.py
+
 
 import torch
 import torch.nn as nn
@@ -13,21 +14,35 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 import glob
+from collections import OrderedDict
+import copy
+
+
 
 class Brain(nn.Module):
-    def __init__(self, num_sensors, num_actions, Load_Model=False, Model_Directory='', Model_file_ext='.pth',
+    def __init__(self, num_sensors, num_actions, use_cuda=False, Load_Model=False, Model_Directory='', Model_file_ext='.pth',
                  Find=False, default_model='model.pth'):
 
         super(Brain, self).__init__()
-        self.layer1 = nn.Linear(num_sensors, 128)
-        self.layer2 = nn.Linear(128, 64)
-        self.output_layer = nn.Linear(64, num_actions)
-        self.optimizer = optim.Adam(self.parameters(), lr=0.0113211)
+        # Def online network
+        self.online = nn.Sequential(OrderedDict([
+            ('layer1', nn.Linear(num_sensors, 128)),
+            ('relu1', nn.ReLU()),
+            ('layer2', nn.Linear(128, 64)),
+            ('relu2', nn.ReLU()),
+            ('output_layer', nn.Linear(64, num_actions))
+        ]))
 
-        # One-hot encoding of actions
-        # self.action_mappings = np.identity(num_actions, dtype=np.uint8) # be more conventional
+        # Duplicate online to create the target network
+        self.target = copy.deepcopy(self.online)
+
+        # Q Freeze target network parameters
+        for param in self.target.parameters():
+            param.requires_grad = False
+
+        self.optimizer = optim.Adam(self.online.parameters(), lr=0.0113211)
+        self.use_cuda = use_cuda
         self.action_mappings = torch.eye(num_actions)
-
         self.load_a_model = Load_Model
         self.model_file = default_model if Load_Model else 'model.pth'
 
@@ -36,11 +51,29 @@ class Brain(nn.Module):
                 Model_Directory, 'model' + Model_file_ext)
             self.load_model(model_path)
 
-    def forward(self, sensor_inputs):
-        x = torch.relu(self.layer1(sensor_inputs))
-        x = torch.relu(self.layer2(x))
-        action_outputs = self.output_layer(x)
-        return action_outputs
+    def forward(self, sensor_inputs, model='online'):
+        if model == 'online':
+            action_outputs = self.online(sensor_inputs)
+            return action_outputs
+        else:
+            action_outputs = self.target(sensor_inputs)
+            return action_outputs
+
+    # convert old to new
+    def convert_to_sequential(self):
+        # Convert the individual layers to a sequential model
+        self.online = nn.Sequential(OrderedDict([
+            ('layer1', self.layer1),
+            ('relu1', nn.ReLU()),
+            ('layer2', self.layer2),
+            ('relu2', nn.ReLU()),
+            ('output_layer', self.output_layer)
+        ]))
+        # Optionally, freeze all layers and just use the new sequential for forward operations
+        for param in self.parameters():
+            param.requires_grad = False
+
+        self.optimizer = optim.Adam(self.online.parameters(), lr=0.0113211)  # Reinitialize the optimizer
 
     def find_latest_model(self, directory, file_ext):
         list_of_files = glob.glob(os.path.join(directory, '*' + file_ext))  # Include directory in search
@@ -50,13 +83,42 @@ class Brain(nn.Module):
         return latest_file
 
     def load_model(self, filepath):
-        if os.path.isfile(filepath):
-            print(f'Loading model from {filepath}')
-            self.load_state_dict(torch.load(filepath))
+        try:
+            # Try to load the model normally
+            state_dict = torch.load(filepath)
+            self.load_state_dict(state_dict)
             self.eval()  # Set the model to evaluation mode after loading
-            self.model_file = filepath
-        else:
-            raise FileNotFoundError(f"Model file not found at {filepath}")
+        except RuntimeError as e:
+            # Catch the error and attempt to fix mismatched keys
+            print("Caught RuntimeError:", e)
+            print("Attempting to fix state_dict keys...")
+
+            # Adjust the keys
+            new_state_dict = {}
+            for key, value in state_dict.items():
+                # Prefix all keys with 'online.' to match the expected keys for the online network
+                new_key = 'online.' + key if not key.startswith('online.') else key
+                new_state_dict[new_key] = value
+
+            # Attempt to load the adjusted state_dict
+            try:
+                self.load_state_dict(new_state_dict, strict=False)  # Load with strict=False to allow for missing keys
+            except RuntimeError as e:
+                print("Failed to load after fixing keys:", e)
+                raise
+
+            # After loading the online network, update the target network to match
+            self.update_target_network()
+
+        # Update the stored model file path
+        self.model_file = filepath
+        print(f"Model loaded from {filepath}.")
+
+    def update_target_network(self):
+        # Update target network to be the same as online
+        self.target.load_state_dict(self.online.state_dict())
+        for param in self.target.parameters():
+            param.requires_grad = False
 
     def decide_action(self, state):
         self.eval()  # Set the network to evaluation mode
@@ -104,6 +166,7 @@ class Brain(nn.Module):
         loss.backward()
         self.optimizer.step()
 
+
     def action_learn(self, state, action, reward, done, current_score, score_target=None):
         self.train()
         state_tensor = torch.tensor(state, dtype=torch.float)
@@ -139,11 +202,13 @@ class Brain(nn.Module):
         self.optimizer.step()
 
     def get_weights(self, layer_name='layer1'):
-        # Return the weight matrix of the specified layer
-        # Here, accessing the weights of layer1 as an example
-        layer = getattr(self, layer_name, None)
-        if layer is not None:
-            return layer.weight.data.cpu().numpy()  # Assuming you want to work with NumPy arrays
+        if layer_name in self.online._modules:
+            layer = self.online._modules[layer_name]
+            if hasattr(layer, 'weight'):
+                return layer.weight.data.cpu().numpy()
+            else:
+                print(f"No weights available for layer named '{layer_name}'.")
+                return None
         else:
             print(f"Layer {layer_name} not found in the model.")
             return None
@@ -335,8 +400,6 @@ class WearableBrain(nn.Module):
         torch.save(self.state_dict(), filepath)
 
 
-
-
 class ConvBrain(nn.Module):
     def __init__(self, input_channels, num_actions, Load_Model=False, Model_Directory='', Model_file_ext='.pth',
                  Find=False, default_model='model.pth'):
@@ -489,4 +552,3 @@ class ConvBrain(nn.Module):
             filepath = self.model_file
         print(f'Saving Model. [ {filepath} ]')
         torch.save(self.state_dict(), filepath)
-        
