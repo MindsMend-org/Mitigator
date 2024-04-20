@@ -4,9 +4,19 @@
 # Deep Learn [try] lets create a curious brian.
 # gen requirements file pip freeze > requirements.txt
 
-__version__ = "0.0.0003"
+# main.py
+__version__ = "0.0.0004"
+
 import fc_color
 from dataframe_validator import validate_and_correct_data
+from vis_window import Game_Vis_Window
+from game import Game, get_score, get_target_score
+from brain import Brain
+from time_step import time_step
+from render_weights import WeightRenderer
+
+mvw = Game_Vis_Window()
+mvw.run()
 print(f'main.py {__version__}')
 
 print(f'FoldingCircles 2024  A Play with [ Deep Learning Part 2 ]  -M-')
@@ -33,11 +43,14 @@ print(f'Exotic Pairs:   '
 print(f'')
 print(f'')
 
-# main.py
-from game import Game, get_score, get_target_score
-from brain import Brain
-from time_step import time_step
-from render_weights import WeightRenderer
+# Personal project:
+# first create a baby brain tries random things lots. Done! Here We continue with new train system
+
+# seems ai needs to see all paths to know what a path is and if the info it sees is similar to a path seen.
+# mirror data in time and dimension forwards v backwards and 360/8 directions
+
+# scores[reward/cost] / aims[goals / recover / attack / defend] / targets[ progress in steps towards a final goal]
+
 
 
 # This may be an un-necessary step but for me needed.
@@ -72,14 +85,8 @@ def main():
     # Simulate Time ?
     sim_time = True  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
 
-    # TODO  
     # Attention To Sensors
     # AttentionConvMatrix = [P[n] X P[-n]] = 1,0,-1
-    # UI
-    # AI Controls
-    # Q > learn
-    # Live Data
-    # Save 
 
     # The Loop
     while not game.is_over():
@@ -107,6 +114,10 @@ def main():
 
         # vis the Brain
         neuron_renderer.update(weight_matrix=brain.get_weights())
+
+        # M Vis Win > Game/Abstraction > Sensor/s
+        mvw.run()
+    mvw.quit()
 
 
 if __name__ == "__main__":
