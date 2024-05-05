@@ -1,4 +1,4 @@
-# Forex Data for Mitigation Training
+# Forex Data for Mitigation Training [DOWNLOAD] FILE:[https://drive.google.com/file/d/1hxD1vALhT-gXyBBKbCdPYKjxMBe7WeKc/view?usp=sharing]
 
 ## Overview
 
