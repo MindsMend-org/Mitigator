@@ -1,1 +1,10 @@
-## For trading per day from to 2024-03-29
+## For trading per day from 2005-01-31 to 2024-03-29
+- EUR/USD (Euro/US Dollar)
+- USD/JPY (US Dollar/Japanese Yen)
+- GBP/USD (British Pound/US Dollar)
+- USD/CHF (US Dollar/Swiss Franc)
+- AUD/USD (Australian Dollar/US Dollar)
+- USD/CAD (US Dollar/Canadian Dollar)
+- NZD/USD (New Zealand Dollar/US Dollar)
+
+The data spans from **22005-01-31** to **2024-03-29** 
