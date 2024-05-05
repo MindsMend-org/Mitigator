@@ -7,4 +7,4 @@
 - USD/CAD (US Dollar/Canadian Dollar)
 - NZD/USD (New Zealand Dollar/US Dollar)
 
-The data spans from **22005-01-31** to **2024-03-29** 
+The data spans from **2005-01-31** to **2024-03-29** 
