@@ -1,0 +1,9 @@
+{
+  "strategy": "mean_reversion",
+  "initial_capital": 100000,
+  "risk_management": {
+    "stop_loss": 0.02,
+    "take_profit": 0.05
+  },
+  "data_source": "historical_data.csv"
+}
