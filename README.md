@@ -5,7 +5,7 @@ Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 
 # Mitigator Project
 
-Mitigator is a comprehensive trading bot designed to execute and analyze trades based on a predefined strategy. This project includes features for backtesting, live trading, and detailed analysis of trading performance.
+Mitigator is a comprehensive trading bot designed to execute and analyze trades based on a predefined strategy, With the Ability to Mitigate!. This project includes features for backtesting, live trading, and detailed analysis of trading performance.
 
 ## Table of Contents
 
