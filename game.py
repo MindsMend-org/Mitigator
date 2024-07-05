@@ -1,11 +1,26 @@
-# FoldingCircles 2024
-# Brett Palmer mince@foldingcircles.co.uk
+# PRIVATE AND CONFIDENTIAL [Intellectual Property Of Brett Palmer mince@foldingcircles.co.uk]
+# [No Copying Or Reading Or Use Permitted !]
+"""
+Copyright (c) 2023, Brett Palmer (Mince@foldingcircles.co.uk)
+
+All rights reserved. No permission is granted for anyone, except the software owner, Brett Palmer, to use, copy, modify,
+distribute, sublicense, or otherwise deal with the software in any manner.
+
+Any unauthorized use, copying, or distribution of this software without the explicit written consent of the software
+owner is strictly prohibited.
+
+For permission requests, please contact the software owner, Brett Palmer, at Mince@foldingcircles.co.uk.
+"""
+
+# FoldingCircles Making The Unknown Known
+
 
 __version__ = "0.0.0003"
 print(f'game.py {__version__}')
 
 # game.py
 import time
+from strategy import analyze_data, D_calculate_bollinger_bands, calculate_bollinger_crossovers, get_trade_signal
 from time_step import TIME_STEP  # Import here to avoid circular dependencies
 from forex_data_loader import DataLoader
 from forex_playback_sim import PlaybackSimulator
@@ -86,7 +101,7 @@ class Game:
         self.red = rgb_color(220, 40, 60)
         self.green = rgb_color(0, 255, 0)
         self.sim_wait = True
-        self.sim_wait_time = 0.8  # seconds or steps
+        self.sim_wait_time = 0.1  # seconds or steps
         # desc std all game types > make into a class
         self.game_type = "M-Trader"  # Game Description
         self.game_mode = "AUTO_OPEN_SHORT"  # set to auto open / short / per temporal step
@@ -119,7 +134,14 @@ class Game:
                 print(f'{currency_pair}: {trade}')  # This will use the __str__ method of TradeTransaction
 
     # game: game-trade and game-logic update
-    def forex_step(self, sim_wait=None, wait_time=None):
+    def _forex_step(self, sim_wait=None, wait_time=None):
+        """
+        Modify the forex_step method to include
+        Bollinger Bands analysis and pattern detection. This will guide the trade opening decisions:
+        :param sim_wait:
+        :param wait_time:
+        :return:
+        """
         if wait_time == None:
             wait_time = self.sim_wait_time
         if sim_wait == None:
@@ -170,6 +192,77 @@ class Game:
                 # update cap
                 self.capital()
 
+
+# new opener M-mod_bolinger
+    def forex_step(self, sim_wait=None, wait_time=None):
+        if wait_time is None:
+            wait_time = self.sim_wait_time
+        if sim_wait is None:
+            sim_wait = self.sim_wait
+
+        if sim_wait:
+            time.sleep(wait_time)
+
+        STEPPED = False
+        pairs_count = len(self.simulators)
+        counter = 0
+
+        self.invested = 0.0
+        self.open_trades = 0
+
+        for pair, simulator in self.simulators.items():
+            if self.simulators:
+                if not STEPPED:
+                    self.step += 1
+                    STEPPED = True
+                print(f"Step {self.step} for {pair}  ", end=' ')
+                current_wait = sim_wait if counter == pairs_count else False
+                current_forex_data = simulator.get_sim_index(simulator.index, wait=current_wait, wait_time=wait_time)
+
+                last_close = self.last_close_prices[pair]
+                current_close = current_forex_data['close']
+
+                change = 0.0
+                if last_close is not None:
+                    color = self.green if current_close > last_close else self.red
+                    change = current_close - last_close
+                else:
+                    color = self.reset
+
+                print(
+                    f"{color}Time: {current_forex_data['timestamp']}, Close: {current_close}  {change:.6f}{self.reset}")
+
+                # Run analysis on current Forex data
+                signal = get_trade_signal(simulator.data)
+
+                # Act based on the trade signal
+                if signal == "buy":
+                    self.open_trade(pair, "buy", self.wager / current_close)
+                elif signal == "sell":
+                    self.open_trade(pair, "sell", self.wager / current_close)
+
+                self.game_logic()
+                self.last_close_prices[pair] = current_close
+                self.update_transactions(pair, current_forex_data)
+                self.capital()
+
+    def _run_analysis(self, pair, data): # remove encaplsulate it into strat
+        window_size = 20  # Adjust as needed
+        num_std = 2  # Adjust as needed
+
+        # Ensure the data is structured correctly
+        b_band_window = np.array(data[-window_size:], dtype=[('o', 'f8'), ('h', 'f8'), ('l', 'f8'), ('c', 'f8')])
+
+        upper_band, lower_band = D_calculate_bollinger_bands(b_band_window, smoothing_window=window_size,
+                                                             num_std=num_std)
+        upper_crossovers, lower_crossovers = calculate_bollinger_crossovers(b_band_window, upper_band, lower_band)
+
+        # Check for signals and open trades accordingly
+        if upper_crossovers:
+            self.open_trade(pair, "sell", self.wager / b_band_window['c'][-1])
+        elif lower_crossovers:
+            self.open_trade(pair, "buy", self.wager / b_band_window['c'][-1])
+#------------------------------------ opener added - M modified Bolinger
     def show_internals(self):
         print(f'-')
         print(f'FoldingCircles Mitigator AI Project 2024')
@@ -235,6 +328,7 @@ class Game:
                     current_price = self.last_close_prices[pair]
 
                 trade_type = "sell"
+                self.wager = self.bank/50
                 quantity = self.wager / current_price
                 self.open_trade(pair, trade_type, quantity)
                 # update any sensors or logs for clear historic path to action and current state.

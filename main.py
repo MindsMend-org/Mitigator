@@ -1,22 +1,29 @@
-# Brett Palmer mince@foldingcircles.co.uk
+# PRIVATE AND CONFIDENTIAL [Intellectual Property Of Brett Palmer mince@foldingcircles.co.uk]
+# [No Copying Or Reading Or Use Permitted !]
+"""
+Copyright (c) 2023, Brett Palmer (Mince@foldingcircles.co.uk)
 
+All rights reserved. No permission is granted for anyone, except the software owner, Brett Palmer, to use, copy, modify,
+distribute, sublicense, or otherwise deal with the software in any manner.
+
+Any unauthorized use, copying, or distribution of this software without the explicit written consent of the software
+owner is strictly prohibited.
+
+For permission requests, please contact the software owner, Brett Palmer, at Mince@foldingcircles.co.uk.
+"""
+
+# FoldingCircles Making The Unknown Known
 # pip install numpy
+
 # Deep Learn [try] lets create a curious brian.
+
 # gen requirements file pip freeze > requirements.txt
 
-# main.py
 __version__ = "0.0.0004"
 
 import fc_color
 from dataframe_validator import validate_and_correct_data
-from vis_window import Game_Vis_Window
-from game import Game, get_score, get_target_score
-from brain import Brain
-from time_step import time_step
-from render_weights import WeightRenderer
 
-mvw = Game_Vis_Window()
-mvw.run()
 print(f'main.py {__version__}')
 
 print(f'FoldingCircles 2024  A Play with [ Deep Learning Part 2 ]  -M-')
@@ -51,7 +58,15 @@ print(f'')
 
 # scores[reward/cost] / aims[goals / recover / attack / defend] / targets[ progress in steps towards a final goal]
 
+# main.py
+from vis_window import Game_Vis_Window
+from game import Game, get_score, get_target_score
+from brain import Brain
+from time_step import time_step
+from render_weights import WeightRenderer
 
+mvw = Game_Vis_Window()
+mvw.run()
 
 # This may be an un-necessary step but for me needed.
 Validate_currency_pairs = {

@@ -1,5 +1,8 @@
 # FC 2024 Deep Learn M Q mince@foldingcircles.co.uk
 # VJoypad.py
+__version__ = "0.0.0002"
+
+print(f'VJoypad.py {__version__}')
 import pyautogui  # for simulating keyboard and mouse actions
 
 class VirtualJoypad:
@@ -12,6 +15,7 @@ class VirtualJoypad:
             pyautogui.press(key)  # Simulates pressing the key
 
 """
+AI Abilities [Keyboard/Mouse]
 Example for a specific game map[ActionNAME: InOutKey]
 action_map = {
     "UP": "w",

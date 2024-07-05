@@ -15,7 +15,7 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 # FoldingCircles Making The Unknown Known
 
 
-__version__ = "0.0.001"
+__version__ = "0.0.002"
 print(f'forex_data_loader.py {__version__}')
 UPDATE_FOREX = False
 
@@ -76,7 +76,7 @@ def save_data(df, filename):
     print(f"Data saved to CSV file. [{filename}]")
 
 def pull_forex_data():
-    # Example usage
+    # Example usage [7] [CM = [7][RxC]]
     api_key = '0B1ZE4ZQ7EGFTBHO'  # Replace with your Alpha Vantage API key
     currency_pairs = ['EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD']
 

@@ -81,7 +81,7 @@ class WeightRenderer:
             [(vertex_buffer, '2f 2f', 'in_vert', 'in_text')]
         )
 
-        # Create a framebuffer to render to
+        # Create a frame-buffer to render to
         self.fbo = self.ctx.framebuffer(color_attachments=[self.ctx.texture((width, height), 4)])
 
         # Define a simple quad to render the texture on
@@ -92,9 +92,10 @@ class WeightRenderer:
             1.0, 1.0, 1.0, 1.0
         ], dtype='f4'))
 
-
-
-    def update(self, weight_matrix, GPU_MODE=False):
+    def update(self, weight_matrix, GPU_MODE=False, TEST=False):
+        if TEST:
+            print(f'\r-Testing Display Neuron with image.-')
+            #weight_matrix = loadimage
         if GPU_MODE:
             if weight_matrix is not None:
                 # Normalize weight matrix to be in the range [0, 1]
