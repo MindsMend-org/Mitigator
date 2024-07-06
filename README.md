@@ -134,10 +134,11 @@ Trade Performance Metrics
   <img alt="Trade Performance Metrics" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
 </picture>
 
-Total Profit/Loss: 180572.26285161864
-Total Trades: 1272
-Winning Trades: 772
-Losing Trades: 500
-Win Rate: 60.69%
+Total Profit/Loss: 124109.35604307543
+Total Trades: 2004
+Winning Trades: 1107
+Losing Trades: 897
+Win Rate: 55.24%
+
 
 > Part Of Folding-Circles
