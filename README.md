@@ -3,6 +3,18 @@ The Beginnings of a Reinforcement Trade Bot For Forex Majors/Minors Aim to be wo
 I am working out git convention lol
 Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 
+# code of interest trading signals/experimentals
+https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sharing
+
+# ToDo:
+Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
+Fix all the balance issues with trade stack.
+Fix The opener modes. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
+
+# Activate the Mitigation AI system:
+choose sensors
+
+
 # Mitigator Project
 
 Mitigator is a comprehensive trading bot designed to execute and analyze trades based on a predefined strategy, With the Ability to Mitigate!. This project includes features for backtesting, live trading, and detailed analysis of trading performance.
