@@ -28,7 +28,7 @@ Mitigator is a comprehensive trading bot designed to execute and analyze trades 
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/mitigator.git
+   git clone https://github.com/MindsMend-org/mitigator.git
    cd mitigator
 
 
