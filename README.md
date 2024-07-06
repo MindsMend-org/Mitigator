@@ -134,7 +134,7 @@ Trade Performance Metrics
   <img alt="Trade Performance Metrics" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
 </picture>
 
-> Total Profit/Loss: 124109.35604307543
+> Total Profit/Loss: £ 124109.36p
 
 > Total Trades: 2004
 
