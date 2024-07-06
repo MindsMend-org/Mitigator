@@ -22,12 +22,22 @@ def analyze_trade_history(file_path):
         return
 
     df = pd.DataFrame(trade_history)
+    print(f"Columns in the DataFrame: {df.columns}")
 
     # Ensure required columns are present
     required_columns = {'entry_price', 'trade_type', 'quantity', 'status', 'open_time', 'close_time', 'exit_price', 'profit_loss'}
     if not required_columns.issubset(df.columns):
         print("Missing required data columns.")
         return
+
+    # Check for any null values in the close_time and open_time columns
+    if df['close_time'].isnull().any() or df['open_time'].isnull().any():
+        print("Null values detected in 'close_time' or 'open_time'.")
+        df = df.dropna(subset=['close_time', 'open_time'])
+
+    # Convert time columns to datetime
+    df['close_time'] = pd.to_datetime(df['close_time'], unit='s', errors='coerce')
+    df['open_time'] = pd.to_datetime(df['open_time'], unit='s', errors='coerce')
 
     # Analysis and visualization
     profit_loss = df['profit_loss'].sum()
@@ -52,7 +62,6 @@ def analyze_trade_history(file_path):
     plt.show()
 
     # Cumulative Profit Over Time
-    df['close_time'] = pd.to_datetime(df['close_time'], unit='s')
     df.set_index('close_time', inplace=True)
     df['cumulative_profit'] = df['profit_loss'].cumsum()
 
@@ -84,6 +93,17 @@ def analyze_trade_history(file_path):
     ax2.plot(names[-1:], values[-1:], color='orange', marker='o', linestyle='-')
     ax2.set_ylabel('Win Rate (%)')
 
+    plt.show()
+
+    # Trade Duration Analysis
+    df['trade_duration'] = (df.index - df['open_time']).dt.total_seconds() / 3600  # Convert duration to hours
+
+    plt.figure(figsize=(10, 5))
+    plt.hist(df['trade_duration'], bins=50, alpha=0.75)
+    plt.xlabel('Duration (hours)')
+    plt.ylabel('Count')
+    plt.title('Trade Duration Distribution')
+    plt.savefig('analysis/trade_duration_distribution.png')
     plt.show()
 
 if __name__ == "__main__":
