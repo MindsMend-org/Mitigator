@@ -22,6 +22,7 @@ Mitigator is a comprehensive trading bot designed to execute and analyze trades 
 - **Backtesting**: Test trading strategies on historical data.
 - **Performance Analysis**: Generate detailed reports and visualizations of trading performance.
 - **Trade History Management**: Store and manage trade history in JSON format.
+- **Mitigation**: Deep learn Mitigation of incorrect opening of posistion.
 
 ## Installation
 
