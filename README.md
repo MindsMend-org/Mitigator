@@ -111,21 +111,22 @@ The analysis of trade history includes visualizations of the cumulative profit o
 
 Cumulative Profit Over Time
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/cumulative_profit_over_time_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/cumulative_profit_over_time_light.png">
-  <img alt="Cumulative Profit Over Time" src="Mitigator/analysis/cumulative_profit_over_time_light.png">
-
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/cumulative_profit_over_time.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/cumulative_profit_over_time.png?raw=true">
+  <img alt="Cumulative Profit Over Time" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/cumulative_profit_over_time.png?raw=true">
+</picture>
 Profit/Loss Distribution
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/profit_loss_distribution_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/profit_loss_distribution_light.png">
-  <img alt="Profit/Loss Distribution" src="Mitigator/analysis/profit_loss_distribution_light.png">
-
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/profit_loss_distribution.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/profit_loss_distribution.png?raw=true">
+  <img alt="Profit/Loss Distribution" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/profit_loss_distribution.png?raw=true">
+</picture>
 Trade Performance Metrics
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/trade_performance_metrics_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/trade_performance_metrics_light.png">
-  <img alt="Trade Performance Metrics" src="Mitigator/analysis/trade_performance_metrics_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
+  <img alt="Trade Performance Metrics" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
+</picture>
 
 Total Profit/Loss: 180572.26285161864
 Total Trades: 1272
