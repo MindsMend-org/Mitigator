@@ -105,25 +105,32 @@ BTC:
 bc1qnmycts7xdlzgesf0vwmm940psdvuejrc9grru2
 
 
-##lastrun
-###Analysis
+##Last Run
+Analysis
 The analysis of trade history includes visualizations of the cumulative profit over time, profit/loss distribution, and trade performance metrics.
 
 Cumulative Profit Over Time
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="analysis/cumulative_profit_over_time_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="analysis/cumulative_profit_over_time_light.png">
-  <img alt="Cumulative Profit Over Time" src="analysis/cumulative_profit_over_time_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/cumulative_profit_over_time_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/cumulative_profit_over_time_light.png">
+  <img alt="Cumulative Profit Over Time" src="Mitigator/analysis/cumulative_profit_over_time_light.png">
 
 Profit/Loss Distribution
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="analysis/profit_loss_distribution_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="analysis/profit_loss_distribution_light.png">
-  <img alt="Profit/Loss Distribution" src="analysis/profit_loss_distribution_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/profit_loss_distribution_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/profit_loss_distribution_light.png">
+  <img alt="Profit/Loss Distribution" src="Mitigator/analysis/profit_loss_distribution_light.png">
 
 Trade Performance Metrics
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="analysis/trade_performance_metrics_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="analysis/trade_performance_metrics_light.png">
-  <img alt="Trade Performance Metrics" src="analysis/trade_performance_metrics_light.png">
-   
+  <source media="(prefers-color-scheme: dark)" srcset="Mitigator/analysis/trade_performance_metrics_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="Mitigator/analysis/trade_performance_metrics_light.png">
+  <img alt="Trade Performance Metrics" src="Mitigator/analysis/trade_performance_metrics_light.png">
+
+Total Profit/Loss: 180572.26285161864
+Total Trades: 1272
+Winning Trades: 772
+Losing Trades: 500
+Win Rate: 60.69%
+
+> Part Of Folding-Circles
