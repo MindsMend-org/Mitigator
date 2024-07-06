@@ -121,6 +121,12 @@ Profit/Loss Distribution
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/profit_loss_distribution.png?raw=true">
   <img alt="Profit/Loss Distribution" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/profit_loss_distribution.png?raw=true">
 </picture>
+Trade Duration Distribution
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/trade_duration_distribution.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/trade_duration_distribution.png?raw=true">
+  <img alt="Profit/Loss Distribution" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/trade_duration_distribution.pngg?raw=true">
+</picture>
 Trade Performance Metrics
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
