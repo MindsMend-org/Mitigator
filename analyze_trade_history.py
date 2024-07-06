@@ -59,6 +59,7 @@ def analyze_trade_history(file_path):
     plt.ylabel('Frequency')
     plt.title('Profit/Loss Distribution')
     plt.grid(True)
+    plt.savefig('analysis/profit_loss_distribution.png')
     plt.show()
 
     # Cumulative Profit Over Time
@@ -71,6 +72,7 @@ def analyze_trade_history(file_path):
     plt.ylabel('Cumulative Profit')
     plt.title('Cumulative Profit Over Time')
     plt.grid(True)
+    plt.savefig('analysis/cumulative_profit_over_time.png')
     plt.show()
 
     # Bar chart of trade performance metrics
@@ -93,6 +95,7 @@ def analyze_trade_history(file_path):
     ax2.plot(names[-1:], values[-1:], color='orange', marker='o', linestyle='-')
     ax2.set_ylabel('Win Rate (%)')
 
+    plt.savefig('analysis/trade_performance_metrics.png')
     plt.show()
 
     # Trade Duration Analysis
@@ -112,4 +115,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     analyze_trade_history(file_path=args.file)
-
