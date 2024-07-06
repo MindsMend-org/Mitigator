@@ -109,7 +109,7 @@ bc1qnmycts7xdlzgesf0vwmm940psdvuejrc9grru2
 Analysis
 The analysis of trade history includes visualizations of the cumulative profit over time, profit/loss distribution, and trade performance metrics.
 
-Cumulative Profit Over Time [if used simulation mode then 5 mins = about 6 months ]
+Cumulative Profit Over Time [if used simulation mode then 5 mins = about 3 months ]
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/cumulative_profit_over_time.png?raw=true">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/cumulative_profit_over_time.png?raw=true">
