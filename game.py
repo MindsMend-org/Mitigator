@@ -91,7 +91,7 @@ class Game:
         self.last_repeated = [False] * self.action_size  # Track if the last instance of an action was repeated [DEBUG]
         self.current_forex_data = None
         self.step = 0
-        self.start_bank = 120000.0
+        self.start_bank = 1200000.0  # boost as some positions stay open too long , I need to work on stack control for Mitigation system to start work[05/07/24]
         self.bank = self.start_bank
         self.invested = 0.0
         self.wager = 395.25
@@ -307,6 +307,7 @@ class Game:
             return open_trades[0]
         return None
 
+    # Game:Mitigation AI [[internal]:[1] [2] [3] ]
     def game_logic(self, show_details=False):
         # [1] call internal_flag update internal timers
         if self.internal_flag():
@@ -323,13 +324,19 @@ class Game:
 
                 pair = random_key
                 if pair in self.simulators:
+                    # use a simulation pair
                     current_price = self.simulators[pair].data[self.simulators[pair].index]['close']
                 else:
+                    # use a live pair
                     current_price = self.last_close_prices[pair]
 
+                # set trade type
                 trade_type = "sell"
+                # set wager using bank/50
                 self.wager = self.bank/50
+                # update quantity using wager at current price
                 quantity = self.wager / current_price
+                # perform open trade
                 self.open_trade(pair, trade_type, quantity)
                 # update any sensors or logs for clear historic path to action and current state.
 
@@ -337,7 +344,7 @@ class Game:
                 print(
                     f'>TRADE: Pair:{pair}    Type:{trade_type}    Cost:£{quantity * current_price:.3f}    qty:{quantity:.3f}')
 
-            # free memory move old trades to archive
+            # free memory move old trades to archive [only closed trades]
             self.archive_old_trades()
 
             if self.open_trades > 0:
@@ -367,6 +374,7 @@ class Game:
         self.invested += investments_value
         self.open_trades += _open_trade_count
 
+    # trade Transactions:
     def open_trade(self, pair, trade_type, quantity):
         if pair in self.simulators:
             current_price = self.simulators[pair].data[self.simulators[pair].index]['close']
@@ -377,6 +385,7 @@ class Game:
                 self.bank -= cost
             print(f'- £ {cost:.2f}  bank:[£{self.bank:.2f}]    cap £{self.cap:.2f}p')
 
+    # trade Transactions:
     def close_trade(self, pair, transaction_index):
         if pair in self.transactions and 0 <= transaction_index < len(self.transactions[pair]):
             transaction = self.transactions[pair][transaction_index]
@@ -399,6 +408,7 @@ class Game:
                 print(f'Closed Trade: {transaction.trade_type.upper()} - Profit/Loss: £{profit_loss:.2f},'
                       f'New Bank Balance: £{self.bank:.2f}')
 
+    # trade Transactions: expired
     def close_expired_trades(self, _time_limit=None):  # Default time_limit set to 5400 seconds (90 minutes)
         if _time_limit is not None:
             time_limit = _time_limit
@@ -416,6 +426,7 @@ class Game:
                         # Call the close_trade method using the pair and the index of the trade
                         self.close_trade(pair, trade_index)
 
+    # trade Transactions:
     def archive_old_trades(self, _archive_after=None):  # Default is 30 days (30*24*60*60 seconds) 2592000
         if _archive_after is not None:
             archive_after = _archive_after
@@ -435,6 +446,7 @@ class Game:
             self.save_trades_to_history_file(trades_to_archive)
             print(f"Archived {len(trades_to_archive)} trades.")
 
+    # trade Transactions: history
     def save_trades_to_history_file(self, trades):
         try:
             # Assuming trade data is serializable; otherwise, adjust serialization method
@@ -444,18 +456,22 @@ class Game:
         except Exception as e:
             print(f"Failed to write to history file: {e}")
 
+    # Mitigation AI
     def get_state(self):
         # Normalized distance to target score as part of the state
         distance_to_target = (self.target_score - self.score) / self.target_score
         self.state[-1] = distance_to_target  # Set the last element of the state to the distance
         return self.state
 
+    # Mitigation AI
     def action_repeated(self, action):
         return self.action_history and action == self.action_history[-1]
 
+    # Mitigation AI
     def get_action_reward(self, action):
         return 0.00
 
+    # Console
     # display game information to console: update > called from game.forex_step() [singular] todo [sequence]
     def update(self, action, Debug=True):
         reward = 0.0
@@ -466,11 +482,12 @@ class Game:
         else:
             col = self.red
         print(
-            f'Bank: £{self.bank:.2f}    Invested:[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
+            f'Bank: £{self.bank:.2f}    Positions Invested: #[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
 
         # Initialize is_repeated based on the immediate history
         is_repeated = False if not self.action_history else action == self.action_history[-1]
 
+        # Mitigation AI
         # Append the current action's repeated status
         if self.action_history:
             self.last_repeated.append(is_repeated)
@@ -481,17 +498,20 @@ class Game:
         self.score += reward
         set_score(self.score)
 
+        # Mitigation AI
         # Debug output
         if Debug:
             print(
                 f'Action: {action} Repeated: {is_repeated}  Reward: {reward:.2f} Score: {self.score:.2f}  Distance:{get_target_score() - self.score}',
                 end='  ')
 
+        # Mitigation AI
         # Update the state and score
         self.state[action % self.state_size] = self.score
         self.action_history.append(action)
         self.state_history.append(self.state.copy())
 
+        # Mitigation AI
         # Maintain the length of histories
         if len(self.action_history) > self.action_size:
             self.action_history.pop(0)
@@ -500,17 +520,22 @@ class Game:
         if len(self.state_history) > 60:
             self.state_history.pop(0)
 
+        # Mitigation AI
         return reward, self.is_over()
 
+    # Game:Mitigation AI
     def capital(self):
         self.cap = self.bank + self.invested
         return self.cap
 
+    # Game:Mitigation AI
     def is_over(self):
         # Example condition to end the game
         return self.cap <= 100.00
 
+    # Game:Mitigation AI
     def should_save_model(self):
         ts = TIME_STEP()
         # Example condition to save model £$ 3 mill $£
+        # Mitigation AI [update this to a rolling value based upon starting capital]
         return ts % 10000 == 0 or self.cap > 300000
