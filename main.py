@@ -98,7 +98,7 @@ def main():
     brain = Brain(use_cuda=False, num_sensors=game.state_size, num_actions=game.action_size, Load_Model=True, Find=True)
 
     # Simulate Time ?
-    sim_time = True  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
+    sim_time = False  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
 
     # Attention To Sensors
     # AttentionConvMatrix = [P[n] X P[-n]] = 1,0,-1

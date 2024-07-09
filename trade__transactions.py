@@ -31,7 +31,8 @@ def format_time_zone(timestamp):
     dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return dt.strftime('%H:%M:%S')
 class TradeTransaction:
-    def __init__(self, trade_type, entry_price, quantity):
+    def __init__(self, trade_type, entry_price, quantity, trade_code=None):
+        self.u_code = trade_code
         self.entry_price = entry_price
         self.trade_type = trade_type
         self.quantity = quantity
@@ -62,7 +63,8 @@ class TradeTransaction:
                 f'Status: {self.status})  E Time: {format_time_zone(self.open_time)}   Profit £{profit:.2f}'
                 f'    Duration: {duration_str}')
 
-    def open_trade(self, price, trade_type, quantity):
+    def open_trade(self, price, trade_type, quantity, trade_code=None):
+        self.u_code = trade_code
         self.entry_price = price
         self.trade_type = trade_type
         self.quantity = quantity

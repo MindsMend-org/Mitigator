@@ -15,10 +15,11 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 # FoldingCircles Making The Unknown Known
 
 
-__version__ = "0.0.0003"
+__version__ = "0.0.0004"
 print(f'game.py {__version__}')
 
 # game.py
+import datetime
 import time
 from strategy import analyze_data, D_calculate_bollinger_bands, calculate_bollinger_crossovers, get_trade_signal
 from time_step import TIME_STEP  # Import here to avoid circular dependencies
@@ -29,9 +30,10 @@ from trade__transactions import TradeTransaction
 from fc_color import reset_color, rgb_color
 import random
 import json
+from trade_tracker import TradeTracker
+tracker = TradeTracker()  # used to track all trades
 
 UPDATE_FOREX = False
-
 if UPDATE_FOREX: pull_forex_data()
 
 # GLOBAL
@@ -70,7 +72,7 @@ class Game:
     def __init__(self, currency_pairs):
         self.currency_pairs = currency_pairs  # Example: currency_pairs = {'EURUSD':'EURUSD_data.csv', 'USDJPY': 'USDJPY_data.csv'}
         self.simulators = {}
-        self.transactions = {}  # Transactions for each currency pair
+        self.transactions = {}  # (Trade)Transactions for each currency pair
 
         for pair, file in currency_pairs.items():  # Iterate through dictionary if using a dictionary
             data_loader = DataLoader(file)
@@ -91,30 +93,38 @@ class Game:
         self.last_repeated = [False] * self.action_size  # Track if the last instance of an action was repeated [DEBUG]
         self.current_forex_data = None
         self.step = 0
-        self.start_bank = 1200000.0  # boost as some positions stay open too long , I need to work on stack control for Mitigation system to start work[05/07/24]
+        self.start_bank = 3000.0  # boost as some positions stay open too long , I need to work on stack control for Mitigation system to start work[05/07/24]
         self.bank = self.start_bank
         self.invested = 0.0
-        self.wager = 395.25
+        self.wager = 5.25
         self.cap = self.bank + self.invested
         self.open_trades = 0
         self.reset = reset_color()
         self.red = rgb_color(220, 40, 60)
         self.green = rgb_color(0, 255, 0)
-        self.sim_wait = True
+        self.sim_wait = True  # default setting for sim is to wait
         self.sim_wait_time = 0.1  # seconds or steps
         # desc std all game types > make into a class
         self.game_type = "M-Trader"  # Game Description
-        self.game_mode = "AUTO_OPEN_SHORT"  # set to auto open / short / per temporal step
-        self.game_temporal_step_ratio = (10 * 7) * 3  # [10 * Pair Count] steps to one temporal step [logic]
+        self.game_mode = ""  # "AUTO_OPEN_SHORT"  # set to auto open / short / per temporal step
+        self.game_temporal_step_ratio = (10 * 7) * 1  # [10 * Pair Count] steps to one temporal step [logic]
         self.game_flag = False  # used for internal logic flag/counters
         self.game_since = -1  # used for internal logic flag/counters
         self.game_next = self.game_temporal_step_ratio  # used for internal logic flag/counters
-        self.game_show_details = False  # used for internal logic flag/counters
+        self.game_show_details = False  # DEBUG: used for internal logic flag/counters
         self.game_live_mode = False
-        self.game_close_after = 60  # for random close 1 min
-        self.game_archive_time = self.game_close_after + 9  # 2592000  # Default is 30 days (30*24*60*60 seconds) > archive
+        self.game_close_after = 15  # for random close 1 min switch from minuets to M_steps for consistency sim/real/fast M_steps in seconds = (steps / self.realtime_per_step)
+        self.game_archive_time = 1  # self.game_close_after + 1  # 2592000  # Default is 30 days (30*24*60*60 seconds) > archive
         self.game_step = self.step
-        self.game_temporal_step = -1
+        self.game_temporal_step = -1  # internal
+        self.game_time_start = None  # internal # To track the start time of each step
+        self.game_time_to = 0.0  # internal
+        self.game_time_total = 0.0  # internal  get ave: .time_total/.step
+        self.game_realtime_per_step = 0.0  # internal  becomes ave time per step for closing max open time depending on running time/sim time = True/False
+        self.game_time_total_reset_at = 99999999.999  # internal used to stop big number counts > 0.0
+
+    def generate_unique_code(self, open_time):
+        return open_time.strftime("%d.%m.%Y.%H.%M.%S") + f".{open_time.microsecond // 1000:03d}"
 
     def start_forex_simulations(self):
         if self.simulators:
@@ -134,67 +144,8 @@ class Game:
                 print(f'{currency_pair}: {trade}')  # This will use the __str__ method of TradeTransaction
 
     # game: game-trade and game-logic update
-    def _forex_step(self, sim_wait=None, wait_time=None):
-        """
-        Modify the forex_step method to include
-        Bollinger Bands analysis and pattern detection. This will guide the trade opening decisions:
-        :param sim_wait:
-        :param wait_time:
-        :return:
-        """
-        if wait_time == None:
-            wait_time = self.sim_wait_time
-        if sim_wait == None:
-            sim_wait = self.sim_wait
-
-        if sim_wait: time.sleep(wait_time)  # Simulate time delay for each step
-
-        STEPPED = False
-        pairs_count = len(self.simulators)
-        counter = 0
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        self.invested = 0.0  # !!
-        self.open_trades = 0  # !!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        for pair, simulator in self.simulators.items():
-            if self.simulators:
-                if not STEPPED:
-                    self.step += 1
-                    STEPPED = True
-                print(f"Step {self.step} for {pair}  ", end=' ')
-                # Ensure sim_wait is True only for the last item in the loop
-                current_wait = sim_wait if counter == pairs_count else False
-                current_forex_data = simulator.get_sim_index(simulator.index, wait=current_wait, wait_time=wait_time)
-
-                last_close = self.last_close_prices[pair]
-                current_close = current_forex_data['close']
-
-                change = 0.0
-
-                # Determine the color based on price movement
-                if last_close is not None:
-                    color = self.green if current_close > last_close else self.red
-                    change = current_close - last_close
-                else:
-                    color = self.reset
-
-                # ui
-                print(
-                    f"{color}Time: {current_forex_data['timestamp']}, Close: {current_close}  {change:.6f}{self.reset}")
-
-                # game logic
-                self.game_logic()
-                # update last_close
-                self.last_close_prices[pair] = current_close
-                # update trade transactions
-                self.update_transactions(pair, current_forex_data)
-                # update cap
-                self.capital()
-
-
-# new opener M-mod_bolinger
-    def forex_step(self, sim_wait=None, wait_time=None):
+    # new opener M-mod_bolinger
+    def forex_step(self, sim_wait=None, wait_time=None, debug=True):
         if wait_time is None:
             wait_time = self.sim_wait_time
         if sim_wait is None:
@@ -212,9 +163,29 @@ class Game:
 
         for pair, simulator in self.simulators.items():
             if self.simulators:
+                # step one time per all pairs
                 if not STEPPED:
+                    # Update the average runtime per step when self.step changes
+                    if self.game_time_start is not None:
+                        step_end_time = time.time()
+                        step_duration = step_end_time - self.game_time_start
+                        self.game_time_total += step_duration
+                        self.game_realtime_per_step = self.game_time_total / self.step if self.step > 0 else 0
+                    else:
+                        self.game_time_start = time.time()  # Set the start time for the first step
                     self.step += 1
                     STEPPED = True
+                    # Print all tracker trades
+                    if tracker:
+                        print(f'-')
+                        tracked_list = tracker.get_open_trades()
+                        tracked_total = len(tracker.get_trades())
+                        print("All tracked trades:")
+                        print(f'Total Tracked:{tracked_total}')
+                        for trade in tracked_list:
+                            print(trade)
+                        print(f'-')
+
                 print(f"Step {self.step} for {pair}  ", end=' ')
                 current_wait = sim_wait if counter == pairs_count else False
                 current_forex_data = simulator.get_sim_index(simulator.index, wait=current_wait, wait_time=wait_time)
@@ -232,37 +203,63 @@ class Game:
                 print(
                     f"{color}Time: {current_forex_data['timestamp']}, Close: {current_close}  {change:.6f}{self.reset}")
 
-                # Run analysis on current Forex data
-                signal = get_trade_signal(simulator.data)
+                # todo FIX
+                # We need a way to organize game modes and game functions as have internals in game logic and functions in forex step
+                #    -game-logic = if self.game_mode == "AUTO_OPEN_SHORT": forex step signal/buy/sel
+                # strategy: signal (Run analysis on current Forex data)
 
-                # Act based on the trade signal
+                # todo FIX: Incorporate self.step into the signal function [FIXED]
+                signal = get_trade_signal(simulator.data, self.step, debug=True, debug_graph=False)  # call strategy.py
+
+                # set trade type
+                # trade_type = signal
+                # set wager using bank/50
+                self.wager = self.bank / 20
+                # update current_price
+                current_price = current_close
+                # update quantity using wager at current price
+                quantity = self.wager / current_price
+
+                # Close all opposite trades based on the signal
                 if signal == "buy":
-                    self.open_trade(pair, "buy", self.wager / current_close)
+                    self.close_all_open_trades(pair, "buy")
                 elif signal == "sell":
-                    self.open_trade(pair, "sell", self.wager / current_close)
+                    self.close_all_open_trades(pair, "sell")
+
+                # Act opening based on the trade signal
+                if signal == "buy":
+                    if debug:
+                        print(f'Debug:game.py:forex_step():wager:cost: [{self.wager}]')
+
+                    # TRACKING_Unique Code Use From Now On[9-7-24]
+                    u_code = self.generate_unique_code(datetime.datetime.now())
+                    self.open_trade(pair, "buy", quantity, u_code)
+                    if tracker:
+                        # Define a new tracker_trade [only add when opening maintain via a single push per step]
+                        new_trade = {
+                            'symbol': f'{pair}',
+                            'quantity': quantity,
+                            'price': self.wager
+                        }
+                        # copy to Trade Tracker
+                        tracker.open_trade(new_trade, u_code)
+
+                elif signal == "sell":
+                    if debug:
+                        print(f'Debug:game.py:forex_step():wager:cost: [{self.wager}]')
+                    self.open_trade(pair, "sell", quantity)
 
                 self.game_logic()
                 self.last_close_prices[pair] = current_close
                 self.update_transactions(pair, current_forex_data)
                 self.capital()
 
-    def _run_analysis(self, pair, data): # remove encaplsulate it into strat
-        window_size = 20  # Adjust as needed
-        num_std = 2  # Adjust as needed
+        if self.step % 10 == 0:
+            print(f'-')
+            print(f"Average time per step: {self.game_realtime_per_step:.6f} seconds")
+            print(f'-')
 
-        # Ensure the data is structured correctly
-        b_band_window = np.array(data[-window_size:], dtype=[('o', 'f8'), ('h', 'f8'), ('l', 'f8'), ('c', 'f8')])
-
-        upper_band, lower_band = D_calculate_bollinger_bands(b_band_window, smoothing_window=window_size,
-                                                             num_std=num_std)
-        upper_crossovers, lower_crossovers = calculate_bollinger_crossovers(b_band_window, upper_band, lower_band)
-
-        # Check for signals and open trades accordingly
-        if upper_crossovers:
-            self.open_trade(pair, "sell", self.wager / b_band_window['c'][-1])
-        elif lower_crossovers:
-            self.open_trade(pair, "buy", self.wager / b_band_window['c'][-1])
-#------------------------------------ opener added - M modified Bolinger
+    # ------------------------------------ opener added - M modified Bolinger
     def show_internals(self):
         print(f'-')
         print(f'FoldingCircles Mitigator AI Project 2024')
@@ -333,7 +330,7 @@ class Game:
                 # set trade type
                 trade_type = "sell"
                 # set wager using bank/50
-                self.wager = self.bank/50
+                self.wager = self.bank / 50
                 # update quantity using wager at current price
                 quantity = self.wager / current_price
                 # perform open trade
@@ -375,10 +372,10 @@ class Game:
         self.open_trades += _open_trade_count
 
     # trade Transactions:
-    def open_trade(self, pair, trade_type, quantity):
+    def open_trade(self, pair, trade_type, quantity, trade_code=None):
         if pair in self.simulators:
             current_price = self.simulators[pair].data[self.simulators[pair].index]['close']
-            new_transaction = TradeTransaction(trade_type, current_price, quantity)
+            new_transaction = TradeTransaction(trade_type, current_price, quantity, trade_code)
             self.transactions[pair].append(new_transaction)
             cost = current_price * quantity
             if trade_type == 'buy':
@@ -408,12 +405,46 @@ class Game:
                 print(f'Closed Trade: {transaction.trade_type.upper()} - Profit/Loss: £{profit_loss:.2f},'
                       f'New Bank Balance: £{self.bank:.2f}')
 
+    # close opposite Transactions by movement signal
+    def close_all_open_trades(self, pair, keep_trade_type):
+        """
+        Close Open Trades: Signal Activated : Keeps open [keep_trade_type] trade type
+        :param pair: major/minor/exotic
+        :param keep_trade_type: 'buy'/'sell'
+        :return:
+        """
+        if pair in self.transactions:
+            for transaction in self.transactions[pair]:
+                if transaction.status == 'open' and transaction.trade_type != keep_trade_type:
+                    self.close_trade(pair, self.transactions[pair].index(transaction))
+
     # trade Transactions: expired
-    def close_expired_trades(self, _time_limit=None):  # Default time_limit set to 5400 seconds (90 minutes)
+    def close_expired_trades(self, _time_limit=None, sub_time_frame=None,
+                             debug=True):  # Default time_limit set to 5400 seconds (90 minutes)
+        """
+        will need to work out convention for secs, mins, hours, days as trading type as sim can
+        sim with days as secs or min/day and vice versa
+        :param _time_limit: Define on call or use self.game_close_after as M_steps time
+        :param sub_time_frame: 1 days, 60 mins
+        :param debug:
+        :return:
+        """
+        if debug: print(f'game.py:close_expired_trades:_time_limit[{_time_limit}]')
         if _time_limit is not None:
             time_limit = _time_limit
         else:
-            time_limit = self.game_close_after
+            # update to (M_step time) from (time)
+            if sub_time_frame == None:
+                sub_time_frame = self.game_realtime_per_step
+                if debug:
+                    print(f'sub_time_frame[{sub_time_frame}]')
+            if debug:
+                print(f'self.game_realtime_per_step[{self.game_realtime_per_step}]')
+            # self.game_close_after = 60  # for random close 1 min switch from minuets to M_steps for consistency sim/real/fast M_steps in seconds = (steps / self.realtime_per_step)
+            # time_limit = self.game_close_after
+            # Calculate time limit in seconds based on steps and average time per step
+            time_limit = (
+                                     self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
 
         current_time = time.time()
         for pair, trades in self.transactions.items():
@@ -427,7 +458,7 @@ class Game:
                         self.close_trade(pair, trade_index)
 
     # trade Transactions:
-    def archive_old_trades(self, _archive_after=None):  # Default is 30 days (30*24*60*60 seconds) 2592000
+    def archive_old_trades(self, _archive_after=None):  # Default is 30/60 days (30*24*60*60 seconds) 2592000
         if _archive_after is not None:
             archive_after = _archive_after
         else:
@@ -482,7 +513,7 @@ class Game:
         else:
             col = self.red
         print(
-            f'Bank: £{self.bank:.2f}    Positions Invested: #[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
+            f'>[{self.bank - self.start_bank}]<  Bank: £{self.bank:.2f}    Positions Invested: #[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
 
         # Initialize is_repeated based on the immediate history
         is_repeated = False if not self.action_history else action == self.action_history[-1]
@@ -531,7 +562,7 @@ class Game:
     # Game:Mitigation AI
     def is_over(self):
         # Example condition to end the game
-        return self.cap <= 100.00
+        return self.cap <= 10.00
 
     # Game:Mitigation AI
     def should_save_model(self):
