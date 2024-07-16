@@ -157,5 +157,8 @@ Trade Performance Metrics
 > Win Rate: 60.75%
 
 
+[Read the detailed trade analysis report](./trade_analysis_report.html)
+
+
 
 > Part Of Folding-Circles
