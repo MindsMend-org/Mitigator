@@ -15,7 +15,7 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 # FoldingCircles Making The Unknown Known
 
 
-__version__ = "0.0.0002"
+__version__ = "0.0.0005"
 print(f'trade_transactions.py {__version__}')
 
 
@@ -43,33 +43,13 @@ class TradeTransaction:
         self.profit_loss = 0.00
 
     def __str__(self):
-        """Returns a string representation of the trade, useful for printing details."""
-        if self.status == 'open':
-            duration = timedelta(seconds=time.time() - self.open_time)
-            profit = self.profit_loss
-        else:
-            duration = timedelta(seconds=self.close_time - self.open_time)
-            profit = self.profit_loss
-
-        # Proper formatting of the duration:
+        duration = timedelta(seconds=(time.time() - self.open_time) if self.status == 'open' else (self.close_time - self.open_time))
         hours, remainder = divmod(int(duration.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
-
-        # If you need it as a float of hours, here's how you could calculate it:
-        duration_in_hours = duration.total_seconds() / 3600
-        duration_str = f'    Duration: {hours:02d}:{minutes:02d}:{seconds:02d}'
-
+        duration_str = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+        profit = self.profit_loss
         return (f'M-it({self.trade_type.upper()}, Entry: {self.entry_price:.3f}, Quantity: {self.quantity:.4f}, '
-                f'Status: {self.status})  E Time: {format_time_zone(self.open_time)}   Profit £{profit:.2f}'
-                f'    Duration: {duration_str}')
-
-    def open_trade(self, price, trade_type, quantity, trade_code=None):
-        self.u_code = trade_code
-        self.entry_price = price
-        self.trade_type = trade_type
-        self.quantity = quantity
-        self.status = 'open'
-        self.open_time = time.time()
+                f'Status: {self.status})  E Time: {format_time_zone(self.open_time)}   Profit £{profit:.2f}  Duration: {duration_str}')
 
     def close_trade(self, exit_price):
         if self.status == 'open':
@@ -78,14 +58,12 @@ class TradeTransaction:
             self.close_time = time.time()
             self.calculate_profit_loss()
 
-    # running value
     def update_value(self, current_price):
         if self.status == 'open':
             self.profit_loss = (current_price - self.entry_price) * self.quantity
             if self.trade_type == 'sell':
                 self.profit_loss *= -1
 
-    # final profit calc
     def calculate_profit_loss(self):
         if self.status == 'closed':
             self.profit_loss = (self.exit_price - self.entry_price) * self.quantity
@@ -94,6 +72,7 @@ class TradeTransaction:
 
     def get_profit_loss(self):
         return self.profit_loss
+
 
 
 

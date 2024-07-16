@@ -141,6 +141,7 @@ def get_trade_signal(data, current_step, window_size=30, num_std=1.35, recent_wi
             print(f'TRUE:upper_band or lower_band is None:')
             print(f'return none')
             print(f'DEBUG:strategy.py:end')
+            print('-')
         return "none"
 
     recent_window_size = int(window_size * recent_window_fraction)
@@ -160,12 +161,18 @@ def get_trade_signal(data, current_step, window_size=30, num_std=1.35, recent_wi
     if last_upper_crossover is not None and last_upper_crossover >= window_size - recent_window_size:
         if debug:
             print(f'TRUE:last_upper_crossover:')
+            print(f'last_upper_crossover:{last_upper_crossover}')
+            print(f'last_lower_crossover:{last_lower_crossover}')
             print(f'DEBUG:strategy.py:end')
+            print('-')
         return "sell"
     elif last_lower_crossover is not None and last_lower_crossover >= window_size - recent_window_size:
         if debug:
             print(f'TRUE:last_lower_crossover:')
+            print(f'last_upper_crossover:{last_upper_crossover}')
+            print(f'last_lower_crossover:{last_lower_crossover}')
             print(f'DEBUG:strategy.py:end')
+            print('-')
         return "buy"
     else:
         if debug:
@@ -173,6 +180,7 @@ def get_trade_signal(data, current_step, window_size=30, num_std=1.35, recent_wi
             print(f'last_upper_crossover:{last_upper_crossover}')
             print(f'last_lower_crossover:{last_lower_crossover}')
             print(f'DEBUG:strategy.py:end')
+            print('-')
         return "none"
 
 

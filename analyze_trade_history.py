@@ -1,4 +1,3 @@
-# useage: python analyze_trade_history.py --file trade_history.json
 import json
 import argparse
 import pandas as pd
