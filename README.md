@@ -7,9 +7,28 @@ Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sharing
 
 # ToDo:
+## [Sim]
+
 Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
-Fix all the balance issues with trade stack.
-Fix The opener modes. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
+
+Fix [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
+
+Fix [Simulation sell] uses the bank without regard to used. its easier to simulate trade sells as amend the difference. 
+
+we just need to track sim sell bank usage.
+
+Fix [trade_analysis_report.html] to page per 100 trades and index Pair choice of view. view[win & pycharm [shift+open]]
+
+Add to [trade_analysis_report.html], Open [Correct Open Count & %]. Timing cruicial. we need to know % correct open
+
+Add to [trade_analysis_report.html], Ave Sentament Swing, Distance from peek to trough
+
+## [Live]
+Add config to allow any Live account and update rate, not sure python be any good at time below 1M
+Bank/open/close all straight calls 
+
+
+
 
 # Activate the Mitigation AI system:
 choose sensors
