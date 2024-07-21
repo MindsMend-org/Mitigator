@@ -23,6 +23,11 @@ Add to [trade_analysis_report.html], Open [Correct Open Count & %]. Timing cruic
 
 Add to [trade_analysis_report.html], Ave Sentament Swing, Distance from peek to trough
 
+Add to [trade_analysis_report.html] Point of Mitigator Activation.
+
+Add to [trade_analysis_report.html] A secondary metric to [Sentiment change over time] graph the required % to counter? / Deep-Learn ?
+
+
 ## [Live]
 Add config to allow any Live account and update rate, not sure python be any good at time below 1M
 Bank/open/close all straight calls 
@@ -30,9 +35,31 @@ Bank/open/close all straight calls
 
 
 
-# Activate the Mitigation AI system:
-choose sensors
+### Activate the Mitigation AI system:
+Choose sensors
 
+### Make use of configs.
+On startup, make use of user config files to determin modes/rules.
+
+## Document All the parts in detail.
+main.py
+
+-
+
+## Document all the parts and command line options.
+[]
+[]
+[]
+[]
+
+-
+
+
+## Document Live Link To API of choice.
+[]
+[]
+[]
+[]
 
 # Mitigator Project
 
@@ -46,7 +73,7 @@ Mitigator is a comprehensive trading bot designed to execute and analyze trades 
 - [Configuration](#configuration)
 - [Contributing](#contributing)
 - [License](#license)
-- [Last-Run](#lastrun)
+- [Last Run](#last-run)
 
 ## Features
 
@@ -136,7 +163,7 @@ BTC:
 bc1qnmycts7xdlzgesf0vwmm940psdvuejrc9grru2
 
 
-##Last Run
+## Last Run
 Analysis
 The analysis of trade history includes visualizations of the cumulative profit over time, profit/loss distribution, and trade performance metrics.
 
