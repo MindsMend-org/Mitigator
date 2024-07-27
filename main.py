@@ -19,7 +19,12 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 
 # gen requirements file pip freeze > requirements.txt
 
-__version__ = "0.0.0004"
+__version__ = "0.0.0006"
+# TODO add timer system for learn timing info Done
+# TODO fix the adjusted Nan issue in debug bands
+# TODO remark out all Mitigator calls while we Iron-out all trade issues for speed
+# TODO one buy system for all calls for open gamelogic/forex logic
+# TODO FEES Done.
 
 import fc_color
 from dataframe_validator import validate_and_correct_data
@@ -64,9 +69,16 @@ from game import Game, get_score, get_target_score
 from brain import Brain
 from time_step import time_step
 from render_weights import WeightRenderer
+import time
 
 mvw = Game_Vis_Window()
-mvw.run()
+
+# Wait for the visualization window to be ready
+while not mvw.is_ready():
+    time.sleep(0.1)
+mvw.run()  # initiate thread call once
+
+
 
 # This may be an un-necessary step but for me needed.
 Validate_currency_pairs = {
@@ -106,32 +118,33 @@ def main():
     # The Loop
     while not game.is_over():
 
-        state = game.get_state()
+        #state = game.get_state()
 
-        action_index, action_matrix, action_probabilities = brain.decide_action(state)  # for clarity
+        #action_index, action_matrix, action_probabilities = brain.decide_action(state)  # for clarity
 
-        action = action_index
-        reward, done = game.update(action)
+        #action = action_index
+        #reward, done = game.update(action)
 
         current_score = get_score()  # Get the current score
 
         # brain.action_learn(state, action, reward, done, current_score, score_target=score_target)
-        brain.learn(state, action, reward, done, current_score)
+        #brain.learn(state, action, reward, done, current_score)
 
         time_step(simulate=sim_time)  # Simulate time passing
         game.forex_step(sim_wait=sim_time)  # Get data for new step sim 1 min intervals: quiet/expose internals & logic?
 
-        if game.should_save_model():
-            brain.save_model('model.pth')
+        #if game.should_save_model():
+        #    brain.save_model('model.pth')
 
-        if done:
-            break  # End the loop if the game is over
+        #if done:
+        #    break  # End the loop if the game is over
 
         # vis the Brain
         neuron_renderer.update(weight_matrix=brain.get_weights())
 
         # M Vis Win > Game/Abstraction > Sensor/s
-        mvw.run()
+        # mvw.run()
+        # mvw.game_loop()
     mvw.quit()
 
 

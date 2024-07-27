@@ -15,12 +15,13 @@ For permission requests, please contact the software owner, Brett Palmer, at Min
 # FoldingCircles Making The Unknown Known
 
 
-__version__ = "0.0.0005"
+__version__ = "0.0.0007"
 print(f'game.py {__version__}')
 
-# game.py
 import datetime
 import time
+import random
+import json
 from strategy import analyze_data, D_calculate_bollinger_bands, calculate_bollinger_crossovers, get_trade_signal
 from time_step import TIME_STEP  # Import here to avoid circular dependencies
 from forex_data_loader import DataLoader
@@ -28,9 +29,8 @@ from forex_playback_sim import PlaybackSimulator
 from forex_data_loader import pull_forex_data
 from trade__transactions import TradeTransaction
 from fc_color import reset_color, rgb_color
-import random
-import json
 from trade_tracker import TradeTracker
+
 tracker = TradeTracker()  # used to track all trades
 
 UPDATE_FOREX = False
@@ -67,7 +67,46 @@ def distance_to_target(score):
     return GAME_TARGET_SCORE - score
 
 
-# self.action_mappings = {0: 'action1', 1: 'action2'}
+# simulate fees
+def non_zero(val):
+    return 0 != val
+
+
+def calculate_trading_costs(trade_size, spread, commission_per_unit, pip_value):
+    """
+    Calculate the total cost of opening a forex trade.
+
+    :param trade_size: Size of the trade in units (e.g., 100,000 for a standard lot)
+    :param spread: Spread in pips
+    :param commission_per_unit: Commission per unit traded (e.g., $5 per 100,000 units)
+    :param pip_value: Value of one pip in the account currency (e.g., $6.56 for 100,000 units of USD/JPY)
+    :return: Total cost in account currency
+    """
+    if non_zero(trade_size) and non_zero(spread) and non_zero(commission_per_unit) and non_zero(pip_value):
+        print(f'--- FEES ---')
+        # Calculate spread cost
+        spread_cost = spread * pip_value
+        print(f'- spread_cost:{spread_cost}')
+
+        # Calculate commission cost
+        commission_cost = (trade_size / 100000) * commission_per_unit
+        print(f'- commission_cost:{commission_cost}')
+
+        # Total cost
+        total_cost = spread_cost + commission_cost
+        print(f'- total_cost:{total_cost}')
+
+        print(f'--- Fees End ---')
+
+        return total_cost
+    print()
+    print(f'---    FEES     ---')
+    print(f'--- ! ZERO VAL ! ---')
+    print(f'---    FEES     ---')
+    print()
+    return 0.000400005
+
+
 class Game:
     def __init__(self, currency_pairs):
         self.currency_pairs = currency_pairs
@@ -89,8 +128,17 @@ class Game:
         self.bank = self.start_bank
         self.invested = 0.0
         self.wager = 5.25
+        self.min_bank_limit = 90.0  # will not open trades if bank< this value
+        self.bank_share = 100  # bank_share=50
         self.cap = self.bank + self.invested
         self.open_trades = 0
+        self.trades_limit_trade_count = True
+        self.trades_max_count = 100  # if trades_limit_trade_count use this as limit
+        self.open_sell_cost = 0.0  # Track the cost of open sell trades
+        # Sim Trading cost parameters
+        self.spread = 1.2  # Example spread in pips
+        self.commission_per_unit = 5  # Example commission per unit
+        self.pip_value = 6.56  # Example pip value for 100,000 units of USD/JPY
         self.reset = reset_color()
         self.red = rgb_color(220, 40, 60)
         self.green = rgb_color(0, 255, 0)
@@ -120,7 +168,6 @@ class Game:
             self.simulators[pair] = PlaybackSimulator(historical_data)
             self.transactions[pair] = []
 
-
     def generate_unique_code(self, open_time):
         return open_time.strftime("%d.%m.%Y.%H.%M.%S") + f".{open_time.microsecond // 1000:03d}"
 
@@ -129,10 +176,26 @@ class Game:
         new_transaction = TradeTransaction(trade_type, current_price, quantity, trade_code)
         self.transactions[pair].append(new_transaction)
         cost = current_price * quantity
+
         if trade_type == 'buy':
-            self.bank -= cost
-        self.cap = self.bank + self.invested
-        print(f'- £ {cost:.2f}  bank:[£{self.bank:.2f}]    cap £{self.cap:.2f}  ucode:{trade_code}')
+            # Calculate total cost including trading costs
+            trade_size = quantity * 100000  # Assuming standard lot size for simplicity
+            total_cost = cost + calculate_trading_costs(trade_size, self.spread, self.commission_per_unit,
+                                                        self.pip_value)
+        else:  # sell
+            trade_size = quantity * 100000  # Assuming standard lot size for simplicity
+            total_cost = calculate_trading_costs(trade_size, self.spread, self.commission_per_unit, self.pip_value)
+            self.open_sell_cost += total_cost  # Track open sell costs
+
+        # self.min_bank_limit
+        if self.bank - total_cost > self.min_bank_limit:
+            self.bank -= total_cost
+            print(f'- £ {total_cost:.2f}  bank:[£{self.bank:.2f}]    cap £{self.cap:.2f}  ucode:{trade_code}')
+        else:
+            print(
+                f'Insufficient funds to open trade. Bank balance: £{self.bank:.2f}, Required: £{total_cost:.2f}  min Bank needed to open £{self.min_bank_limit}')
+            self.transactions[pair].remove(
+                new_transaction)  # Remove the trade if insufficient funds check effect trackers
 
     def close_trade(self, pair, transaction_index):
         if pair in self.transactions and 0 <= transaction_index < len(self.transactions[pair]):
@@ -142,13 +205,22 @@ class Game:
                 transaction.close_trade(current_price)
                 total_position_value = transaction.entry_price * transaction.quantity
                 profit_loss = transaction.get_profit_loss()
+
+                # Calculate trading costs for closing the trade
+                trade_size = transaction.quantity * 100000  # Assuming standard lot size for simplicity
+                trading_cost = 0.0  # calculate_trading_costs(trade_size, self.spread, self.commission_per_unit, self.pip_value)
+
                 if transaction.trade_type == 'buy':
-                    self.bank += total_position_value + profit_loss
+                    self.bank += (total_position_value + profit_loss - trading_cost)
                 elif transaction.trade_type == 'sell':
-                    self.bank += profit_loss
+                    self.bank += (profit_loss - trading_cost)
+                    self.open_sell_cost -= trading_cost  # Deduct the cost from the tracked open sell costs
+
                 self.cap = self.bank + self.invested
-                print(f'Closed Trade:ucode:{transaction.u_code} {transaction.trade_type.upper()} - Profit/Loss: £{profit_loss:.2f},'
-                      f'New Bank Balance: £{self.bank:.2f}')
+                print(
+                    f'Closed Trade:ucode:{transaction.u_code} {transaction.trade_type.upper()} - Profit/Loss: £{profit_loss:.2f},'
+                    f'New Bank Balance: £{self.bank:.2f}')
+                print(f'CAPITAL: £{self.cap}')
 
     def close_all_open_trades(self, pair, keep_trade_type, tracker=None):
         if pair in self.transactions:
@@ -207,12 +279,12 @@ class Game:
             color = self.green if current_close > last_close else self.red
             print(f"{color}Time: {current_forex_data['timestamp']}, Close: {current_close}  {change:.6f}{self.reset}")
 
-            # Update the current price in the TradeTracker this does not append open trades for mit data that must be called seperate
+            # Update the current price in the TradeTracker
             if tracker:
                 tracker.update_current_prices(pair, current_close)
 
             signal = get_trade_signal(simulator.data, self.step, debug=False, debug_graph=False)
-            self.wager = self.bank / 20
+            self.wager = self.bank / self.bank_share  # bank_share=50
             current_price = current_close
             quantity = self.wager / current_price
 
@@ -223,16 +295,25 @@ class Game:
 
             if signal == "buy":
                 u_code = self.generate_unique_code(datetime.datetime.now())
-                self.open_trade(pair, "buy", quantity, u_code)
-                if tracker:
-                    new_trade = {'type': 'buy', 'symbol': pair, 'quantity': quantity, 'price': self.wager}
-                    tracker.open_trade(new_trade, u_code, tradetype='buy')
+
+                if self.trades_limit_trade_count:
+                    #tracked_list = tracker.get_open_trades()
+                    tracked_total = len(tracker.get_trades())
+                    if tracked_total < self.trades_max_count:
+                        self.open_trade(pair, "buy", quantity, u_code)
+                        if tracker:
+                            new_trade = {'type': 'buy', 'symbol': pair, 'quantity': quantity, 'price': self.wager}
+                            tracker.open_trade(new_trade, u_code, tradetype='buy')
             elif signal == "sell":
                 u_code = self.generate_unique_code(datetime.datetime.now())
-                self.open_trade(pair, "sell", quantity, u_code)
-                if tracker:
-                    new_trade = {'type': 'sell', 'symbol': pair, 'quantity': quantity, 'price': self.wager}
-                    tracker.open_trade(new_trade, u_code, tradetype='sell')
+                if self.trades_limit_trade_count:
+                    #tracked_list = tracker.get_open_trades()
+                    tracked_total = len(tracker.get_trades())
+                    if tracked_total < self.trades_max_count:
+                        self.open_trade(pair, "sell", quantity, u_code)
+                        if tracker:
+                            new_trade = {'type': 'sell', 'symbol': pair, 'quantity': quantity, 'price': self.wager}
+                            tracker.open_trade(new_trade, u_code, tradetype='sell')
 
             self.game_logic()
             self.last_close_prices[pair] = current_close
@@ -272,26 +353,29 @@ class Game:
                 else:
                     current_price = self.last_close_prices[pair]
 
-                u_code = self.generate_unique_code(datetime.datetime.now())
-                trade_type = "sell"
-                self.wager = self.bank / 50
-                quantity = self.wager / current_price
-                self.open_trade(pair, trade_type, quantity, u_code)
+                if self.trades_limit_trade_count:
+                    # tracked_list = tracker.get_open_trades()
+                    tracked_total = len(tracker.get_trades())
+                    if tracked_total < self.trades_max_count:
+                        u_code = self.generate_unique_code(datetime.datetime.now())
+                        trade_type = "sell"
+                        self.wager = self.bank / self.bank_share  # bank_share=50
+                        quantity = self.wager / current_price
+                        self.open_trade(pair, trade_type, quantity, u_code)
 
-                if tracker:
-                    new_trade = {
-                        'type': trade_type,
-                        'symbol': pair,
-                        'quantity': quantity,
-                        'price': self.wager
-                    }
-                    # forex step/game logic > served from config file TODO config to var set
-                    # sentimant:['sell'/'buy'] /random:['r_sell']
-                    tracker.open_trade(new_trade, u_code, tradetype=trade_type)  # TODO ADD [info] types/usage info for people
+                        if tracker:
+                            new_trade = {
+                                'type': trade_type,
+                                'symbol': pair,
+                                'quantity': quantity,
+                                'price': self.wager
+                            }
+                            tracker.open_trade(new_trade, u_code, tradetype=trade_type)
 
-                print('-')
-                print(f'>TRADE: Pair:{pair}    Type:{trade_type}    Cost:£{quantity * current_price:.3f}    qty:{quantity:.3f}  UCODE:{u_code}')
-                print('-')
+                        print('-')
+                        print(
+                            f'>TRADE: Pair:{pair}    Type:{trade_type}    Cost:£{quantity * current_price:.3f}    qty:{quantity:.3f}  UCODE:{u_code}')
+                        print('-')
 
             self.archive_old_trades()
 
@@ -339,13 +423,13 @@ class Game:
         self.game_flag = False
 
     def Longest_Trade(self):
-        open_trades = [trade for pair_trades in self.transactions.values() for trade in pair_trades if trade.status == 'open']
+        open_trades = [trade for pair_trades in self.transactions.values() for trade in pair_trades if
+                       trade.status == 'open']
         open_trades.sort(key=lambda x: x.open_time)
         if open_trades:
             return open_trades[0]
         return None
 
-    # currently closed using time may switch to data length days/hours/mins depending on M=?
     def close_expired_trades(self, _time_limit=None, sub_time_frame=None, debug=True):
         if debug:
             print(f'game.py:close_expired_trades:_time_limit[{_time_limit}]')
@@ -358,7 +442,8 @@ class Game:
                     print(f'sub_time_frame[{sub_time_frame}]')
             if debug:
                 print(f'self.game_realtime_per_step[{self.game_realtime_per_step}]')
-            time_limit = (self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
+            time_limit = (
+                                     self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
 
         if debug:
             print(f'----')
@@ -371,16 +456,12 @@ class Game:
                     if trade_duration > time_limit:
                         if debug:
                             formatted_duration = self.format_duration(trade_duration)
-                            print(f"Closing trade {trade.u_code} which has been open for {formatted_duration}  ot:{trade.open_time}  ct:{current_time}")
-                        ## tracker remove may have missed this?
-                        #if tracker:
-                        #    u_code = trade.u_code
-                        #    tracker.close_trade(u_code)
+                            print(
+                                f"Closing trade {trade.u_code} which has been open for {formatted_duration}  ot:{trade.open_time}  ct:{current_time}")
                         self.close_trade(pair, trade_index)
         if debug:
             print('Limit Check END:')
             print(f'----')
-
 
     def format_duration(self, seconds):
         days, remainder = divmod(seconds, 86400)  # 86400 seconds in a day
@@ -430,10 +511,8 @@ class Game:
         return 0.00
 
     def display_trades(self, status='open'):
-        # tracker
         tracker.print_trades(status=status)
 
-        # transactions > get archived anyway
         for pair, transactions in self.transactions.items():
             for transaction in transactions:
                 transaction.print_trade()
@@ -445,7 +524,8 @@ class Game:
             self.display_trades(status='open')
 
         col = self.green if self.cap >= self.start_bank else self.red
-        print(f'>[{self.bank - self.start_bank}]<  Bank: £{self.bank:.2f}    Positions Invested: #[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
+        print(
+            f'>[{self.bank - self.start_bank}]<  Bank: £{self.bank:.2f}    Positions Invested: #[{self.open_trades}] [Profit £{self.invested:.2f}]    CAPITAL £{self.reset}{col}{self.cap:.2f}{self.reset}p')
 
         is_repeated = False if not self.action_history else action == self.action_history[-1]
 
@@ -459,7 +539,9 @@ class Game:
         set_score(self.score)
 
         if Debug:
-            print(f'Action: {action} Repeated: {is_repeated}  Reward: {reward:.2f} Score: {self.score:.2f}  Distance:{get_target_score() - self.score}', end='  ')
+            print(
+                f'Action: {action} Repeated: {is_repeated}  Reward: {reward:.2f} Score: {self.score:.2f}  Distance:{get_target_score() - self.score}',
+                end='  ')
 
         self.state[action % self.state_size] = self.score
         self.action_history.append(action)
@@ -475,7 +557,12 @@ class Game:
         return reward, self.is_over()
 
     def is_over(self):
-        return self.cap <= 10.00
+        """
+        # todo FIX thread issue
+        If this triggers thread will error vis its not vis its no cash!
+        :return:
+        """
+        return self.cap <= 1.00
 
     def should_save_model(self):
         ts = TIME_STEP()
