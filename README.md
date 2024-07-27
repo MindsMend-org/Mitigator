@@ -13,13 +13,35 @@ Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
 
 Fix [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
 
-Fix [Simulation sell] uses the bank without regard to used. its easier to simulate trade sells as amend the difference. 
+BANK REDO
+Fix [Simulation sell] uses the bank without regard to used. its easier to simulate trade sells as amend the difference.[redo] 
 
-we just need to track sim sell bank usage.
+we just need to track sim sell bank usage. [redo]
 
-Fix [trade_analysis_report.html] to page per 100 trades and index Pair choice of view. view[win & pycharm [shift+open]]
+BANK REDO [ALL Trade Openers to go through FEE_OPEN function] [wip]
 
-Add to [trade_analysis_report.html], Open [Correct Open Count & %]. Timing cruicial. we need to know % correct open
+
+Fix [html_analysis.py] speed issue takes way too long. [wip]
+-trade_tracker=TradeTracker() added
+- self.profile if set to True will profile , used  to find s[peed issue]> found close trade>html gen to be the issue
+- self.html_analysis_mode if set to False will not generate html analysis charts
+
+Fix [trade__transactions.py & trade_tracker] trade match error (use compare_summaries_history.py to check) [wip]
+- trade_history.json
+- trade_summaries.json
+- missing history trades
+- python compare_summaries_history.py --summary_file trade_summaries.json --history_file trade_history.json
+- python compare_summaries_history.py --summary_file trade_summaries.json --history_file trade_history.json --balance  (will generate file missing_trades.json)
+
+Fix [trade_analysis_report.html] to page per 100 trades and index Pair choice of view. view[win & pycharm [shift+open]] [wip]
+
+Fix & Add to [game.py] >[close_expired_trades(self, _time_limit=None, sub_time_frame=None, debug=True)] [wip]
+- sim mode limit =>fasttime/realtime/update_count
+- live mode limit =>fasttime/realtime/update_count
+- update_count for fast_sim makes more sense
+- 
+
+Add to [trade_analysis_report.html], Open [Correct Open Count & %]. Timing cruicial. we need to know % correct open [Done]
 
 Add to [trade_analysis_report.html], Ave Sentament Swing, Distance from peek to trough
 
@@ -119,11 +141,16 @@ For live trading, use the following command:
 python live_trading.py --config config/live_trading_config.json
 ```
 
-Analyzing Trade History:
+Analyzing Trade History/Summaries:
 
 To analyze trade history and generate visualizations, use:
 ```bash
 python analyze_trade_history.py --file trade_history.json
+```
+
+To analyze trade summaries and generate visualizations, use:
+```bash
+python analyze_trade_summaries.py --file trade_summaries.json
 ```
 
 
