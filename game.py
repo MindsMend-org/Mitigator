@@ -104,7 +104,7 @@ class Game:
         self.game_next = self.game_temporal_step_ratio
         self.game_show_details = False
         self.game_live_mode = False
-        self.game_close_after = 15
+        self.game_close_after = 8  # days/mins/hours
         self.game_archive_time = 1
         self.game_step = self.step
         self.game_temporal_step = -1
@@ -345,6 +345,7 @@ class Game:
             return open_trades[0]
         return None
 
+    # currently closed using time may switch to data length days/hours/mins depending on M=?
     def close_expired_trades(self, _time_limit=None, sub_time_frame=None, debug=True):
         if debug:
             print(f'game.py:close_expired_trades:_time_limit[{_time_limit}]')
@@ -359,13 +360,36 @@ class Game:
                 print(f'self.game_realtime_per_step[{self.game_realtime_per_step}]')
             time_limit = (self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
 
+        if debug:
+            print(f'----')
+            print('Duration Limit Check All Trades:')
         current_time = time.time()
         for pair, trades in self.transactions.items():
             for trade_index, trade in enumerate(trades.copy()):
                 if trade.status == 'open':
                     trade_duration = current_time - trade.open_time
                     if trade_duration > time_limit:
+                        if debug:
+                            formatted_duration = self.format_duration(trade_duration)
+                            print(f"Closing trade {trade.u_code} which has been open for {formatted_duration}  ot:{trade.open_time}  ct:{current_time}")
+                        ## tracker remove may have missed this?
+                        #if tracker:
+                        #    u_code = trade.u_code
+                        #    tracker.close_trade(u_code)
                         self.close_trade(pair, trade_index)
+        if debug:
+            print('Limit Check END:')
+            print(f'----')
+
+
+    def format_duration(self, seconds):
+        days, remainder = divmod(seconds, 86400)  # 86400 seconds in a day
+        hours, remainder = divmod(remainder, 3600)
+        minutes, remainder = divmod(remainder, 60)
+        seconds, ms = divmod(remainder, 1)
+        ms, ns = divmod(ms * 1e3, 1)
+        ns *= 1e3
+        return f'{int(days)}d:{int(hours):02d}h:{int(minutes):02d}m:{int(seconds):02d}s:{int(ms):03d}ms:{int(ns):03d}ns'
 
     def archive_old_trades(self, _archive_after=None):
         if _archive_after is not None:

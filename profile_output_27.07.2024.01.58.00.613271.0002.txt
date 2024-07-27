@@ -1,0 +1,30 @@
+Sat Jul 27 01:58:03 2024    profile_output_27.07.2024.01.58.00.613271.0002.prof
+
+         596721 function calls (544847 primitive calls) in 0.728 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1367 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.007    0.007    0.723    0.723 html_analysis.py:14(html_analysis)
+        2    0.000    0.000    0.308    0.154 _chart_types.py:216(line)
+        2    0.000    0.000    0.308    0.154 _core.py:2085(make_figure)
+ 1196/126    0.010    0.000    0.275    0.002 basedatatypes.py:4811(__setitem__)
+    98/22    0.001    0.000    0.252    0.011 basedatatypes.py:5892(__setitem__)
+       24    0.000    0.000    0.252    0.011 basedatatypes.py:5110(update)
+    62/48    0.001    0.000    0.231    0.005 basedatatypes.py:3852(_perform_update)
+        2    0.000    0.000    0.223    0.112 offline.py:397(plot)
+        6    0.000    0.000    0.217    0.036 _figure.py:762(update_layout)
+        6    0.000    0.000    0.217    0.036 basedatatypes.py:1367(update_layout)
+   335/27    0.005    0.000    0.215    0.008 basedatatypes.py:5251(_set_compound_prop)
+        2    0.000    0.000    0.195    0.098 _html.py:25(to_html)
+   339/21    0.004    0.000    0.189    0.009 basevalidators.py:2479(validate_coerce)
+35529/467    0.088    0.000    0.188    0.000 copy.py:128(deepcopy)
+ 3065/465    0.013    0.000    0.184    0.000 copy.py:226(_deepcopy_dict)
+        4    0.000    0.000    0.180    0.045 basevalidators.py:2751(validate_coerce)
+        8    0.000    0.000    0.173    0.022 _template.py:250(__init__)
+        2    0.000    0.000    0.173    0.086 _utils.py:6(validate_coerce_fig_to_dict)
+        4    0.000    0.000    0.156    0.039 _figure.py:5(__init__)
+        4    0.000    0.000    0.156    0.039 basedatatypes.py:410(__init__)
+
+
