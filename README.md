@@ -20,6 +20,8 @@ we just need to track sim sell bank usage. [redo]
 
 BANK REDO [ALL Trade Openers to go through FEE_OPEN function] [wip]
 
+Add to [sim] [game.py] fees [done]
+
 
 Fix [html_analysis.py] speed issue takes way too long. [wip]
 -trade_tracker=TradeTracker() added
