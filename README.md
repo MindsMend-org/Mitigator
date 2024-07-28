@@ -6,6 +6,20 @@ Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 # code of interest trading signals/experimentals
 https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sharing
 
+# Done
+
+# Sim
+- Fees
+- Speed
+- Thread issue fix
+- Bank bugs
+- Simplification
+- Limit per trade count per pair
+- Bank use % for opens
+- Standard Open Strategies: M-mod Bollinger, RND Sell
+- 
+- Mitigator's reason to exist is to be able to mitigate bad positions, but it does help to be able to open well.
+
 # ToDo:
 ## [Sim]
 
@@ -13,45 +27,9 @@ Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
 
 Fix [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
 
-BANK REDO
-Fix [Simulation sell] uses the bank without regard to used. its easier to simulate trade sells as amend the difference.[redo] 
+# Switch From Day to 1M est [Sept]
 
-we just need to track sim sell bank usage. [redo]
-
-BANK REDO [ALL Trade Openers to go through FEE_OPEN function] [wip]
-
-Add to [sim] [game.py] fees [done]
-
-
-Fix [html_analysis.py] speed issue takes way too long. [wip]
--trade_tracker=TradeTracker() added
-- self.profile if set to True will profile , used  to find s[peed issue]> found close trade>html gen to be the issue
-- self.html_analysis_mode if set to False will not generate html analysis charts
-
-Fix [trade__transactions.py & trade_tracker] trade match error (use compare_summaries_history.py to check) [wip]
-- trade_history.json
-- trade_summaries.json
-- missing history trades
-- python compare_summaries_history.py --summary_file trade_summaries.json --history_file trade_history.json
-- python compare_summaries_history.py --summary_file trade_summaries.json --history_file trade_history.json --balance  (will generate file missing_trades.json)
-
-Fix [trade_analysis_report.html] to page per 100 trades and index Pair choice of view. view[win & pycharm [shift+open]] [wip]
-
-Fix & Add to [game.py] >[close_expired_trades(self, _time_limit=None, sub_time_frame=None, debug=True)] [wip]
-- sim mode limit =>fasttime/realtime/update_count
-- live mode limit =>fasttime/realtime/update_count
-- update_count for fast_sim makes more sense
-- 
-
-Add to [trade_analysis_report.html], Open [Correct Open Count & %]. Timing cruicial. we need to know % correct open [Done]
-
-Add to [trade_analysis_report.html], Ave Sentament Swing, Distance from peek to trough
-
-Add to [trade_analysis_report.html] Point of Mitigator Activation.
-
-Add to [trade_analysis_report.html] A secondary metric to [Sentiment change over time] graph the required % to counter? / Deep-Learn ?
-
-
+# Enable Mitigator   est [OCT]
 ## [Live]
 Add config to allow any Live account and update rate, not sure python be any good at time below 1M
 Bank/open/close all straight calls 
