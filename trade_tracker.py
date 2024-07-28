@@ -9,6 +9,8 @@ __version__ = "0.0.0008"
 print(f'trade_tracker.py {__version__}')
 
 
+# trade_tracker.py
+
 class TradeTracker:
     def __init__(self):
         self.trades = []
@@ -18,6 +20,7 @@ class TradeTracker:
         self.summaries = self.load_summaries()  # Load summaries at initialization
         self.profile = False
         self.html_analysis_mode = False
+        self.max_history_length = 5  # Set max history length
 
     def load_summaries(self):
         if os.path.exists(self.summary_file) and os.path.getsize(self.summary_file) > 0:
@@ -54,7 +57,7 @@ class TradeTracker:
         for trade in self.trades:
             if trade['trade_code'] == trade_code and trade['status'] == 'open':
                 trade['close_history'].append({'time': datetime.datetime.now(), 'close_value': close_value})
-                print(f"Trade {trade_code} updated with close value: {close_value}")
+                print(f"Trade {trade_code} updated with close value: {close_value}   History len: {len(trade['close_history'])}")
                 return trade
         print(f"Trade not found or not open: {trade_code}")
         return None
@@ -75,12 +78,10 @@ class TradeTracker:
                 close_time = datetime.datetime.now()
                 trade['status'] = 'closed'
                 trade['close_time'] = close_time
-                # Call method to get the current close value
                 close_value = self.get_close_value(trade['symbol'])
                 trade['close_history'].append({'time': close_time, 'close_value': close_value})
                 print(f"Trade closed with code: {trade_code} history len: {len(trade['close_history'])}")
 
-                # Update summaries
                 initial_correct = self.is_initial_correct(trade)
                 new_summary = {
                     'trade_code': trade['trade_code'],
@@ -96,40 +97,36 @@ class TradeTracker:
                 }
                 self.summaries = pd.concat([self.summaries, pd.DataFrame([new_summary])], ignore_index=True)
 
-                # Call html_analysis
                 if self.html_analysis_mode:
-                    html_analysis(trade)  # Call html_analysis here
+                    html_analysis(trade)
 
                 if self.profile:
                     profiler.disable()
                     profiler.dump_stats(f'profile_output_{trade_code}.prof')
 
-                    # Analyze the profile
                     with open(f'profile_output_{trade_code}.txt', 'w') as f:
                         ps = pstats.Stats(f'profile_output_{trade_code}.prof', stream=f)
                         ps.strip_dirs().sort_stats('cumulative').print_stats(20)
 
                     print(f'Profiling complete for {trade_code}. Results saved to profile_output_{trade_code}.txt.')
 
-                # Save summaries
                 self.save_summaries()
                 return trade
         print(f"Trade not found or already closed: {trade_code}")
         return None
 
     def is_initial_correct(self, trade):
-        if len(trade['close_history']) > 1:  # Ensure there are at least two close values
+        if len(trade['close_history']) > 1:
             if trade['trade_type'] == 'buy':
                 return trade['close_history'][1]['close_value'] > trade['price']
-            else:  # sell trade
+            else:
                 return trade['close_history'][1]['close_value'] < trade['price']
         else:
             print(f"Insufficient close history for trade {trade['trade_code']} to determine initial correctness.")
-            return False  # or handle it as appropriate
+            return False
 
     def get_close_value(self, symbol):
-        # Retrieve the current close value for the given symbol from the stored data
-        return self.current_prices.get(symbol, 0.0)  # Default to 0.0 if the symbol is not found
+        return self.current_prices.get(symbol, 0.0)
 
     def get_open_trades(self):
         return [trade for trade in self.trades if trade['status'] == 'open']
@@ -137,15 +134,15 @@ class TradeTracker:
     def get_trades(self):
         return self.trades
 
+    def get_trade(self, trade_code):
+        for trade in self.trades:
+            if trade['trade_code'] == trade_code:
+                return trade
+        return None
+
     def print_trades(self, status='all'):
-        """
-        TradeTracker print_trades
-        :param status: 'open'/'close'/'all'
-        :return:
-        """
         print('-begin')
-        print(
-            f'-tracker-     ALL-EVER:{len(self.trades)}     closed: [{len([trade for trade in self.trades if trade["status"] == "closed"])}]')
+        print(f'-tracker-     ALL-EVER:{len(self.trades)}     closed: [{len([trade for trade in self.trades if trade["status"] == "closed"])}]')
 
         if status == 'all':
             trades_to_print = self.trades

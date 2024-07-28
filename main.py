@@ -104,13 +104,14 @@ def main():
 
     # Init Game
     game = Game(currency_pairs)
+    game.set_vis_window(mvw)  # link game to vis
     game.forex_step()
 
     # Init Brain Type
     brain = Brain(use_cuda=False, num_sensors=game.state_size, num_actions=game.action_size, Load_Model=True, Find=True)
 
-    # Simulate Time ?
-    sim_time = False  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
+    # Simulate Time ? False runs as fast as posible if in sim mide or realtime if Live.
+    sim_time = True  # simulate time scale? if true default time settings = Game.sim_wait = True Game.sim_wait_time = 3
 
     # Attention To Sensors
     # AttentionConvMatrix = [P[n] X P[-n]] = 1,0,-1

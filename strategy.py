@@ -1,8 +1,46 @@
 import numpy as np
 from debug_graph_strategy import window_plot_bollinger_bands
 
-__version__ = "0.0.001"
+__version__ = "0.0.002"
 print(f'strategy.py {__version__}')
+
+
+def non_zero(val):
+    return 0 != val
+
+def calculate_trading_costs(trade_size, spread, commission_per_unit, pip_value):
+    """
+    Calculate the total cost of opening a forex trade.
+
+    :param trade_size: Size of the trade in units (e.g., 1,000,000 for a standard lot)
+    :param spread: Spread in pips
+    :param commission_per_unit: Commission per unit traded (e.g., $5 per 1,000,000 units)
+    :param pip_value: Value of one pip in the account currency (e.g., $6.56 for 100,000 units of USD/JPY)
+    :return: Total cost in account currency
+    """
+    if non_zero(trade_size) and non_zero(spread) and non_zero(commission_per_unit) and non_zero(pip_value):
+        print(f'--- FEES ---')
+        # Calculate spread cost
+        spread_cost = spread * pip_value
+        print(f'- spread_cost:{spread_cost}')
+
+        # Calculate commission cost
+        commission_cost = (trade_size / 1000000) * commission_per_unit
+        print(f'- commission_cost:{commission_cost}')
+
+        # Total cost
+        total_cost = spread_cost + commission_cost
+        print(f'- total_cost:{total_cost}')
+
+        print(f'--- Fees End ---')
+
+        return total_cost
+    print()
+    print(f'---    FEES     ---')
+    print(f'--- ! ZERO VAL ! ---')
+    print(f'---    FEES     ---')
+    print()
+    return 0.000400005
 
 
 def D_calculate_bollinger_bands(data, smoothing_window=20, num_std=2):

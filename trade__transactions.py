@@ -41,6 +41,10 @@ class TradeTransaction:
         self.close_time = None
         self.exit_price = None
         self.profit_loss = 0.00
+        self.mitigated = False
+        self.failed = False
+        self.successful = False
+        self.close_history = []  # Initialize the close_history attribute
 
     def __str__(self):
         duration = timedelta(seconds=(time.time() - self.open_time) if self.status == 'open' else (self.close_time - self.open_time))
@@ -63,6 +67,9 @@ class TradeTransaction:
             self.profit_loss = (current_price - self.entry_price) * self.quantity
             if self.trade_type == 'sell':
                 self.profit_loss *= -1
+
+            # Append the current price to close_history able to limit history length > expired trades
+            self.close_history.append(current_price)
 
     def calculate_profit_loss(self):
         if self.status == 'closed':
