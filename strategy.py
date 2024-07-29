@@ -22,15 +22,15 @@ def calculate_trading_costs(trade_size, spread, commission_per_unit, pip_value):
         print(f'--- FEES ---')
         # Calculate spread cost
         spread_cost = spread * pip_value
-        print(f'- spread_cost:{spread_cost}')
+        print(f'- spread_cost:     £{spread_cost}')
 
         # Calculate commission cost
         commission_cost = (trade_size / 1000000) * commission_per_unit
-        print(f'- commission_cost:{commission_cost}')
+        print(f'- commission_cost:£{commission_cost}')
 
         # Total cost
         total_cost = spread_cost + commission_cost
-        print(f'- total_cost:{total_cost}')
+        print(f'- fee total:      £{total_cost}')
 
         print(f'--- Fees End ---')
 
@@ -116,6 +116,11 @@ def get_trade_signal(data, current_step, window_size=30, num_std=1.35, recent_wi
     :param debug: [True/False] Show Debug In Console?
     :return: > buy/sell/none
     """
+    # cycle proof
+    len_ = len(data)
+    cycle_step = current_step % len_
+    if cycle_step + window_size > len_:
+        current_step = cycle_step
     if debug:
         print(f'DEBUG:strategy.py:start')
 

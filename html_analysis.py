@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import os
 import warnings
 
-__version__ = "0.0.0008"
+__version__ = "0.0.0009"
 print(f'html_analysis.py {__version__}')
 
 # Suppress the specific pandas FutureWarning
@@ -57,13 +57,27 @@ def html_analysis(trade_tracker, output_dir='html_trade_analysis_reports', page_
 
     # Determine if the trade was initially correct
     if trade_tracker['trade_type'] == 'buy':
-        initial_correct = trade_tracker['close_history'][1]['close_value'] > trade_tracker['price']
+        initial_correct = trade_tracker['close_history'][1]['close_value'] > trade_tracker['entry_price']
     else:  # sell trade
-        initial_correct = trade_tracker['close_history'][1]['close_value'] < trade_tracker['price']
+        initial_correct = trade_tracker['close_history'][1]['close_value'] < trade_tracker['entry_price']
 
     # Generate the new trade plot
-    timestamps = [entry['time'] if isinstance(entry['time'], datetime) else datetime.fromtimestamp(entry['time']) for entry in trade_tracker['close_history']]
+    #timestamps = [entry['time'] if isinstance(entry['time'], datetime) else datetime.fromtimestamp(entry['time']) for entry in trade_tracker['close_history']]
+    timestamps = [
+        entry['time'] if isinstance(entry['time'], datetime)
+        else datetime.fromtimestamp(entry['time'] / 1000)  # Divide by 1000 to convert from ms to s
+        for entry in trade_tracker['close_history']
+    ]
+
+
+
     close_values = [entry['close_value'] for entry in trade_tracker['close_history']]
+
+    # Include the entry price as the first point in the graph
+    timestamps.insert(0, datetime.fromtimestamp(trade_tracker["close_history"][0]["time"] / 1000 - 1))  # Adding a point just before the first close history for visualization
+    close_values.insert(0, trade_tracker["entry_price"])
+
+
     fig = px.line(x=timestamps, y=close_values, title=f"Trade {trade_tracker['trade_code']} ({trade_tracker['trade_type'].upper()})", markers=True)
     fig.update_xaxes(title_text='Time')
     fig.update_yaxes(title_text='Price')
@@ -80,7 +94,7 @@ def html_analysis(trade_tracker, output_dir='html_trade_analysis_reports', page_
         'symbol': trade_tracker['symbol'],
         'open_time': trade_tracker['open_time'],
         'close_time': trade_tracker['close_time'],
-        'entry_price': trade_tracker['price'],
+        'entry_price': trade_tracker['entry_price'],
         'close_price': trade_tracker['close_history'][-1]['close_value'],
         'quantity': trade_tracker['quantity'],
         'initial_correct': initial_correct,

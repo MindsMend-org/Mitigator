@@ -1,6 +1,10 @@
 import json
 import argparse
 
+# python print_trade_history.py --file trade_summaries.json
+
+# Mitigator Debug
+
 def load_and_print_trade_history(file_path):
     with open(file_path, 'r') as file:
         content = file.read()

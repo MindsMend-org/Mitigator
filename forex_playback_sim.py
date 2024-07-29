@@ -40,7 +40,8 @@ class PlaybackSimulator:
             self.index += 1
             time.sleep(60)  # Wait for 1 minute
 
-    def get_sim_index(self, index, wait=True, wait_time=3,
+# 2004 to 2024 sim test per day, will change to per min soon 5000 steps
+    def get_sim_index(self, index, wait=True, wait_time=0.0001,
                       LOOP=True):  # df.columns = ['Date', 'Open', 'Close', 'High', 'Low']
         if 0 <= index < len(self.data):  # Ensure index is within the range
             current_data = self.data[index]  # Use the passed index to get the current data
@@ -52,7 +53,7 @@ class PlaybackSimulator:
                 time.sleep(wait_time)  # Wait for 1 minute
             return current_data
         else:
-            print("Index out of range")  # Print error message if index is out of range
+            print(f"Index out of range LOOP CYCLE:{LOOP}")  # Print error message if index is out of range
             if LOOP:
                 self.index = 0
                 index=self.index

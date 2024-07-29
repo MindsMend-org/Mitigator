@@ -39,6 +39,25 @@ BABY = False
 GAME_SCORE = 0
 GAME_TARGET_SCORE = 0.9
 
+
+def _serialize_datetime(obj):
+    if isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    raise TypeError("Type not serializable")
+
+def serialize_datetime(obj):
+    if isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    elif isinstance(obj, datetime.date):
+        return obj.isoformat()
+    else:
+        print(f"Non-serializable type: {type(obj)}")
+        raise TypeError("Type not serializable")
+
+def deserialize_datetime(date_str):
+    return datetime.datetime.fromisoformat(date_str)
+
+
 def get_score():
     global GAME_SCORE
     return GAME_SCORE
@@ -80,14 +99,16 @@ class Game:
         self.bank = self.start_bank
         self.invested = 0.0
         self.wager = 5.25
-        self.min_bank_limit = 90.0  # will not open trades if bank < this value
-        self.bank_share = 30  # bank_share=50
+        self.min_bank_limit = 90.0  # will not open trades if (bank-trade_cost) < this value
+        self.bank_share = 6  # bank_share=50
         self.cap = self.bank + self.invested
         self.open_trades = 0  # pair
         self.all_pairs_open_trades = 0
-        self.max_history_length = 15  # Set max history length > close expired [time & length]
+        self.max_history_length = 33  # Set max history length > close expired [time & length]
+        self.game_close_after = 33  # days/mins/hours & steps if in sim mode [wip]
+        self.game_archive_time = 2
         self.trades_limit_trade_count = True
-        self.trades_max_count = 4  # if trades_limit_trade_count use this as limit [pair] keeps open possible per pair
+        self.trades_max_count = 700  # if trades_limit_trade_count use this as limit [pair] keeps open possible per pair
         self.open_sell_cost = 0.0  # Track the cost of open sell trades
         # Sim Trading cost parameters
         self.spread = 1.2  # Example spread in pips
@@ -97,7 +118,7 @@ class Game:
         self.red = rgb_color(220, 40, 60)
         self.green = rgb_color(0, 255, 0)
         self.sim_wait = True
-        self.sim_wait_time = 0.01
+        self.sim_wait_time = 0.3
         self.game_type = "M-Trader"
         self.game_mode = ""
         self.game_temporal_step_ratio = (10 * 7) * 1
@@ -106,8 +127,6 @@ class Game:
         self.game_next = self.game_temporal_step_ratio
         self.game_show_details = False
         self.game_live_mode = False
-        self.game_close_after = 8  # days/mins/hours
-        self.game_archive_time = 1
         self.game_step = self.step
         self.game_temporal_step = -1
         self.game_time_start = None
@@ -121,6 +140,8 @@ class Game:
         self.closed_trades_count = 0
         self.mitigated_trades_count = 0
         self.failed_trades_count = 0
+        self.initial_successful_open = 0
+        self.initial_failed_open = 0
         self.successful_trades_count = 0
         self.successful_mitigated_trades_count = 0
 
@@ -174,11 +195,17 @@ class Game:
         }
 
         cost = current_price * quantity
-        trade_size = quantity * 100000  # Assuming standard lot size for simplicity
+        trade_size = quantity * 100  # will match prob try OANDA / etoro  [100000 Assuming standard lot size for simplicity]
+        print('--New Trade--')
+        print(f'bank:[£{self.bank:.2f}]    cap £{self.cap:.2f}')
+        print(f' Pos:{trade_type}  Pair:{pair}  * {quantity}  at £{current_price}  TOT-fees £{quantity*current_price}')
         total_cost = calculate_trading_costs(trade_size, self.spread, self.commission_per_unit, self.pip_value)
+        total_cost += cost
+        print(f'Sub Total £{total_cost}')
 
-        if trade_type == 'buy':
-            total_cost += cost
+        #if trade_type == 'buy':
+        #    total_cost += cost
+        # we will switch to allways take cost and on close work out overnight fees and sell+/-
 
         if self.bank - total_cost > self.min_bank_limit:
             self.bank -= total_cost
@@ -210,6 +237,40 @@ class Game:
             tracker.close_trade(trade_code)
             self.closed_trades_count += 1
             print(f'Closed Trade:ucode:{trade_code} {trade["type"].upper()} - Profit/Loss: £{profit_loss:.2f}, New Bank Balance: £{self.bank:.2f}')
+            """
+            if t['mitigated']:
+                self.mitigated_trades_count += 1
+            if t['failed']:
+                self.failed_trades_count += 1
+            if t['successful']:
+                self.successful_trades_count += 1
+                if t['mitigated']:
+                    self.successful_mitigated_trades_count += 1
+            """
+            # stats
+            # Determine if the initial movement was correct
+            if len(trade['close_history']) > 1:
+                first_close_price = trade['close_history'][1]['close_value']
+                if (trade['type'] == 'buy' and first_close_price > trade['price']) or \
+                        (trade['type'] == 'sell' and first_close_price < trade['price']):
+                    trade['initial_correct'] = True
+                    self.initial_successful_open += 1
+                else:
+                    trade['initial_correct'] = False
+                    self.initial_failed_open += 1
+
+            # Determine if the trade was ultimately successful
+            if profit_loss > 0:
+                self.successful_trades_count += 1
+            else:
+                self.failed_trades_count += 1
+
+            if len(trade['close_history']) > 1:
+                open_correct = trade.get('initial_correct', 'N/A')  # trade['initial_correct']
+            else:
+                open_correct = None
+
+            print(f"Stats Trade [{trade_code}]  open correct [{open_correct}]   winner:[{profit_loss > 0}]")
 
     def close_all_open_trades(self, pair, keep_trade_type):
         for trade in tracker.get_open_trades():
@@ -408,7 +469,9 @@ class Game:
                     print(f'sub_time_frame[{sub_time_frame}]')
             if debug:
                 print(f'self.game_realtime_per_step[{self.game_realtime_per_step}]')
-            time_limit = (self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
+
+            # old time_limit = (self.game_close_after * sub_time_frame) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
+            time_limit = (self.game_close_after * 1.01) / self.game_realtime_per_step if self.game_realtime_per_step > 0 else self.game_close_after * sub_time_frame
             print(f'setting time_limit to [{time_limit}]')
         if debug:
             print(f'----')
@@ -445,21 +508,40 @@ class Game:
 
         for trade in tracker.get_trades():
             if trade['status'] == 'closed' and (current_time - trade['close_time'].timestamp()) >= archive_after:
-                trades_to_archive.append(trade)
+                trade_copy = trade.copy()  # Make a copy of the trade serialize error
+                trade_copy['open_time'] = serialize_datetime(trade_copy['open_time'])
+                trade_copy['close_time'] = serialize_datetime(trade_copy['close_time'])
+                trades_to_archive.append(trade_copy)
                 tracker.get_trades().remove(trade)
+                #trades_to_archive.append(trade)
+                #tracker.get_trades().remove(trade)
 
         if trades_to_archive:
             self.save_trades_to_history_file(trades_to_archive)
             print(f"Archived {len(trades_to_archive)} trades.")
 
-    def save_trades_to_history_file(self, trades):
+
+    def save_trades_to_history_file(self,trades):
         try:
             with open('trade_history.json', 'a') as file:
                 for trade in trades:
-                    file.write(json.dumps(trade) + '\n')
+                    trade_copy = trade.copy()
+                    try:
+                        trade_copy['open_time'] = serialize_datetime(trade_copy['open_time'])
+                        if 'close_time' in trade_copy:
+                            trade_copy['close_time'] = serialize_datetime(trade_copy['close_time'])
+
+                        # Ensure all keys and values in trade_copy are serializable
+                        for key, value in trade_copy.items():
+                            if not isinstance(value, (str, int, float, bool, type(None))):
+                                trade_copy[key] = str(value)
+
+                        file.write(json.dumps(trade_copy) + '\n')
+                    except TypeError as e:
+                        print(f"Serialization error for trade: {trade_copy}")
+                        print(f"Error: {e}")
         except Exception as e:
             print(f"Failed to write to history file: {e}")
-
 
 
     def display_trades(self, status='open'):
@@ -514,7 +596,7 @@ class Game:
         return reward, self.is_over()
 
     def is_over(self):
-        return self.cap <= 1.00
+        return self.step >5000
 
     def should_save_model(self):
         ts = TIME_STEP()
