@@ -7,8 +7,7 @@ Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sharing
 
 # Done
-
-# Sim
+- ## Sim
 - Fees
 - Speed
 - Thread issue fix
@@ -17,15 +16,28 @@ https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sh
 - Limit per trade count per pair
 - Bank use % for opens
 - Standard Open Strategies: M-mod Bollinger, RND Sell
-- 
+- Sim Speed Adjust [NON Deep Learn] ns/ms/s/min/hour/day
+- Thread speed issue fix
+- Thread windows higher update-rate
+- Vis display trade stats [50%]
 - Mitigator's reason to exist is to be able to mitigate bad positions, but it does help to be able to open well.
 
 # ToDo:
+- New - Thread issue - bug >if crash with errors video not initiated,
+
+- most likely bank empty or ran to end of data>setting game.is_over == True
+  
+   The main.py  Loop
+    [while not game.is_over():]
+  
+  IF conditions met >.is_over =True
+  It will crash-out, with message >graphics/video not initiated
+  
 ## [Sim]
 
 Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
 
-Fix [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
+Fix/Add config. [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
 
 # Switch From Day to 1M est [Sept]
 
@@ -132,6 +144,11 @@ To analyze trade summaries and generate visualizations, use:
 ```bash
 python analyze_trade_summaries.py --file trade_summaries.json
 ```
+### For speed removed html_analysis.py from running in SIM/Live.
+To convert trade summaries into html graphs, use:
+```bash
+python summaries_to_html.py  trade_summaries.json
+```
 
 
 ##Configuration
@@ -150,7 +167,7 @@ Example Configuration
 }
 ```
 
-##WIP When A Complete Working Version is Available Feel Free Send Me Some Of Our Rewards
+##WIP When A Complete Working Version is Available, Feel Free Send Me Some Of Our Rewards X
 
 ETH:
 0x581b91d5751eb77142694E9770f5984f857e2B84
@@ -199,16 +216,13 @@ Trade Performance Metrics
   <img alt="Trade Performance Metrics" src="https://github.com/MindsMend-org/Mitigator/blob/main/analysis/Trade_performance_metrics.png?raw=true">
 </picture>
 
-> Total Profit/Loss: £5497.92p
+# Open Modes [M_bands/Mean Reversion]
+- % of Bank 
+- AI position wager [AI risk management] (Involves AI determining how much of one's bankroll or investment capital to risk on a particular trade)
 
-> Total Trades: 1014
-
-> Winning Trades: 616
-
-> Losing Trades: 398
-
-> Win Rate: 60.75%
-
+# -- add
+- Random Open
+- Hammer / Engulf
 
 [Read the detailed trade analysis report](./trade_analysis_report.html)
 
