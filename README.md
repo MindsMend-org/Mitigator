@@ -6,23 +6,12 @@ Im new to python, I like to code in Psudo fasion it will likely be messy sorry.
 # code of interest trading signals/experimentals
 https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sharing
 
-# Done
-- ## Sim
-- Fees
-- Speed
-- Thread issue fix
-- Bank bugs
-- Simplification
-- Limit per trade count per pair
-- Bank use % for opens
-- Standard Open Strategies: M-mod Bollinger, RND Sell
-- Sim Speed Adjust [NON Deep Learn] ns/ms/s/min/hour/day
-- Thread speed issue fix
-- Thread windows higher update-rate
-- Vis display trade stats [50%]
-- Mitigator's reason to exist is to be able to mitigate bad positions, but it does help to be able to open well.
 
 # ToDo:
+- Implement the new AI risk management, be interesting to see how the compounded effect of conviction[High, Med, Low] has on Profit .
+- Implement Mitigation stack and Control for Deep Learn.
+- Implement Live Demo test using Oandas Live Demo.
+-  
 - New - Thread issue - bug >if crash with errors video not initiated,
 
 - most likely bank empty or ran to end of data>setting game.is_over == True
@@ -37,8 +26,6 @@ https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sh
 
 Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
 
-Fix/Add config. [The opener modes]. linked to config>self.game_mode = "AUTO_OPEN_SHORT"  self.game_mode = "AUTO_OPEN_M_Bollinger" new  check code link above.
-
 # Switch From Day to 1M est [Sept]
 
 # Enable Mitigator   est [OCT]
@@ -48,9 +35,15 @@ Bank/open/close all straight calls
 
 
 
-
 ### Activate the Mitigation AI system:
-Choose sensors
+#### Choose sensors 
+- [Parallel All Pairs]
+- [Serial Single]
+- [Dist to Mean]
+- [ Max&Min[4] [12] [132] [17292]]-17440
+
+- 
+Design Modes [Learn] [Active] [Active & Learn] [Dissable]
 
 ### Make use of configs.
 On startup, make use of user config files to determin modes/rules.
