@@ -1,3 +1,7 @@
+# Busy with private projects: Will do best to get this to running live using Oanda for [October]
+- Then Mitigation stack control implementation
+- Real fees will play big part in this project, Win or Fails. Really failing is to not try X
+- 
 # Mitigator
 The Beginnings of a Reinforcement Trade Bot For Forex Majors/Minors Aim to be working for 2025. xMx
 I am working out git convention lol
@@ -8,7 +12,7 @@ https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sh
 
 
 # ToDo:
-- Implement the new AI risk management, be interesting to see how the compounded effect of conviction[High, Med, Low] has on Profit .
+- Implement the new AI risk management, be interesting to see how the compounded effect of conviction[High, Med, Low] has on Profit .*
 - Implement Mitigation stack and Control for Deep Learn.
 - Implement Live Demo test using Oandas Live Demo.
 -  
@@ -23,7 +27,7 @@ https://colab.research.google.com/drive/1a7bhdGPq-Z9uLX1P7b4lpzWD5ZDqzU8R?usp=sh
   It will crash-out, with message >graphics/video not initiated
   
 ## [Sim]
-
+Make use of the Tier Confidence opener. [ai_risk_management_III.py] *
 Incorperate the Data I finally aquired (8 years history of all majors) @ 1 min
 
 # Switch From Day to 1M est [Sept]
